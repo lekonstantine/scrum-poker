@@ -7,7 +7,9 @@ import {
   XCircle,
   User as UserIcon,
   Crown,
-  LogOut
+  LogOut,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 // --- Types ---
@@ -69,6 +71,23 @@ export default function App() {
   const [jiraId, setJiraId] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [scale, setScale] = useState(1);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('theme') as 'light' | 'dark';
+      if (saved) return saved;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -85,23 +104,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // If SOCKET_URL is / use current origin, otherwise use the env value
     const url = SOCKET_URL === '/' ? window.location.origin : SOCKET_URL;
-    console.log('Connecting to socket at:', url);
-    
     const newSocket = io(url, {
       path: '/socket.io',
       transports: ['websocket', 'polling']
     });
     
-    newSocket.on('connect', () => {
-      console.log('Socket connected successfully!');
-    });
-
-    newSocket.on('connect_error', (err) => {
-      console.error('Socket connection error:', err);
-    });
-
     newSocket.on('state-update', (state) => {
       setRoomState(prev => ({ ...prev, ...state }));
     });
@@ -112,7 +120,6 @@ export default function App() {
 
     newSocket.on('removed', () => {
       setCurrentUser(null);
-      alert('You have been removed from the room.');
     });
 
     newSocket.on('error', (msg) => {
@@ -120,7 +127,6 @@ export default function App() {
     });
 
     setSocket(newSocket);
-
     return () => {
       newSocket.close();
     };
@@ -183,10 +189,20 @@ export default function App() {
     }
   };
 
+  const userInRoom = roomState.users.find(u => u.id === currentUser?.id) || currentUser;
+  const observers = roomState.users.filter(u => u.isObserver);
+  const latestHistory = roomState.history[roomState.history.length - 1];
+
   if (!currentUser) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-slate-900">
-        <h1 className="text-4xl font-bold mb-8 text-white">Choose Your Character</h1>
+      <div className={`min-h-screen flex flex-col items-center justify-center p-8 transition-colors duration-300 ${theme} ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'}`}>
+        <button 
+          onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+          className="fixed top-8 right-8 p-3 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:scale-110 transition-transform z-50"
+        >
+          {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+        </button>
+        <h1 className="text-4xl font-bold mb-8 text-slate-800 dark:text-white">Choose Your Character</h1>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-6 max-w-5xl">
           {shuffledChars.map((char) => {
             const isTaken = roomState.users.some(u => u.name === char.name);
@@ -194,19 +210,25 @@ export default function App() {
               <button
                 key={char.name}
                 onClick={() => !isTaken && setSelectedChar(char)}
+                onDoubleClick={() => {
+                  if (!isTaken) {
+                    setSelectedChar(char);
+                    socket?.emit('join', char);
+                  }
+                }}
                 disabled={isTaken}
                 className={`p-6 rounded-2xl border-4 transition-all flex flex-col items-center gap-3 ${
                   selectedChar?.name === char.name 
-                  ? 'border-blue-500 bg-blue-500/10 scale-105' 
+                  ? 'border-blue-500 bg-blue-500/10 scale-105 shadow-xl shadow-blue-500/20' 
                   : isTaken 
-                    ? 'border-slate-800 bg-slate-900 opacity-40 grayscale cursor-not-allowed'
-                    : 'border-slate-700 bg-slate-800 hover:border-slate-500'
+                    ? 'border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 opacity-40 grayscale cursor-not-allowed'
+                    : 'border-white dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-500 shadow-md'
                 }`}
               >
                 <span className="text-5xl">{char.avatar}</span>
                 <div className="text-center">
-                  <p className="font-bold text-white text-lg">{char.name}</p>
-                  <p className="text-sm text-slate-400">{isTaken ? 'Already in room' : char.title}</p>
+                  <p className="font-bold text-slate-800 dark:text-white text-lg">{char.name}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{isTaken ? 'Already in room' : char.title}</p>
                 </div>
               </button>
             );
@@ -230,7 +252,7 @@ export default function App() {
                 isObserver: true
               });
             }}
-            className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xl font-bold rounded-full transition-colors border border-slate-700"
+            className="px-8 py-4 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xl font-bold rounded-full transition-colors border border-slate-200 dark:border-slate-700 shadow-md"
           >
             Join as Guest
           </button>
@@ -239,37 +261,32 @@ export default function App() {
     );
   }
 
-  // Poker Room Layout
-  const userInRoom = roomState.users.find(u => u.id === currentUser?.id) || currentUser;
-  const observers = roomState.users.filter(u => u.isObserver);
-  const latestHistory = roomState.history[roomState.history.length - 1];
-
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-6 overflow-hidden flex flex-col">
+    <div className={`min-h-screen p-6 overflow-hidden flex flex-col transition-colors duration-300 ${theme} ${theme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
       {/* Header */}
       <header className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
-          <div className="bg-slate-800 p-3 rounded-xl border border-slate-700">
-            <span className="text-2xl">{userInRoom.avatar}</span>
+          <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <span className="text-2xl">{userInRoom?.avatar}</span>
           </div>
           <div>
             <h2 className="font-bold flex items-center gap-2">
-              {userInRoom.name} {userInRoom.isAdmin && <Crown className="w-4 h-4 text-yellow-400" />}
-              {userInRoom.isObserver && <span className="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-400 ml-2">Observer</span>}
+              {userInRoom?.name} {userInRoom?.isAdmin && <Crown className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />}
+              {userInRoom?.isObserver && <span className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-500 dark:text-slate-400 ml-2">Observer</span>}
             </h2>
-            <p className="text-xs text-slate-400">{userInRoom.title}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{userInRoom?.title}</p>
           </div>
         </div>
 
         {/* Observers List */}
         {observers.length > 0 && (
-          <div className="flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700/50">
+          <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700/50 shadow-sm backdrop-blur-md">
             <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mr-2">Observers</span>
             <div className="flex -space-x-2">
               {observers.map((obs) => (
                 <div 
                   key={obs.id} 
-                  className="w-8 h-8 rounded-full bg-slate-800 border-2 border-slate-900 flex items-center justify-center text-lg shadow-lg hover:scale-110 transition-transform cursor-help"
+                  className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-900 flex items-center justify-center text-lg shadow-lg hover:scale-110 transition-transform cursor-help"
                   title={`${obs.name} (Observer)`}
                 >
                   {obs.avatar}
@@ -281,15 +298,22 @@ export default function App() {
 
         <div className="flex gap-4">
           <button 
+            onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+            className="p-3 bg-white dark:bg-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-white shadow-sm"
+            title="Toggle Theme"
+          >
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+          <button 
             onClick={() => setShowHistory(true)}
-            className="p-3 bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors border border-slate-700 text-slate-400 hover:text-white"
+            className="p-3 bg-white dark:bg-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-white shadow-sm"
             title="History"
           >
             <History className="w-5 h-5" />
           </button>
           <button 
             onClick={handleLeave}
-            className="p-3 bg-slate-800 rounded-xl hover:bg-red-600/20 text-slate-400 hover:text-red-400 transition-all border border-slate-700"
+            className="p-3 bg-white dark:bg-slate-800 rounded-xl hover:bg-red-50 dark:hover:bg-red-600/20 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
             title="Leave Room"
           >
             <LogOut className="w-5 h-5" />
@@ -298,27 +322,26 @@ export default function App() {
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
-        {/* The Scaling Wrapper */}
         <div 
           className="transition-transform duration-300 flex items-center justify-center"
           style={{ transform: `scale(${scale})` }}
         >
           {/* The Table */}
-          <div className="w-[800px] h-[400px] bg-slate-800 rounded-[200px] border-[12px] border-slate-700 shadow-2xl relative flex items-center justify-center">
+          <div className="w-[800px] h-[400px] bg-white dark:bg-slate-800 rounded-[200px] border-[12px] border-slate-100 dark:border-slate-700 shadow-2xl relative flex items-center justify-center transition-colors">
             <div className="text-center max-w-md p-8">
               {roomState.currentTask ? (
                 <>
-                  <h4 className="text-2xl font-bold mb-4 line-clamp-2 flex items-center justify-center gap-3">
+                  <h4 className="text-2xl font-bold mb-4 line-clamp-2 flex items-center justify-center gap-3 text-slate-800 dark:text-white">
                     {roomState.currentTask.title}
                     {roomState.isRevealed && (
-                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-lg">
+                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-lg shadow-lg">
                         {latestHistory ? latestHistory.average : '0.0'}
                       </span>
                     )}
                   </h4>
                 </>
               ) : (
-                <p className="text-slate-500 text-xl italic">Waiting for Admin to start...</p>
+                <p className="text-slate-400 dark:text-slate-500 text-xl italic font-medium">Waiting for Admin to start...</p>
               )}
             </div>
 
@@ -341,25 +364,29 @@ export default function App() {
                       <div className={`w-16 h-24 rounded-lg border-2 flex items-center justify-center text-2xl font-bold transition-all duration-500 ${
                         (roomState.isRevealed ? revealedVote : seatedUser.vote)
                           ? (roomState.isRevealed 
-                              ? 'bg-blue-600 border-blue-400 scale-110 shadow-lg shadow-blue-500/50' 
-                              : 'bg-indigo-900 border-indigo-500 shadow-md rotate-3') 
-                          : 'bg-slate-900/50 border-slate-700/50'
+                              ? 'bg-blue-600 border-blue-400 scale-110 shadow-lg shadow-blue-500/50 text-white' 
+                              : 'bg-indigo-600 dark:bg-indigo-900 border-indigo-400 dark:border-indigo-500 shadow-md rotate-3 text-white') 
+                          : 'bg-slate-100 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700/50 text-slate-300 dark:text-slate-700'
                       }`}>
                         {roomState.isRevealed 
                           ? revealedVote 
                           : (seatedUser.vote ? (
-                              <div className="w-full h-full flex items-center justify-center opacity-20">
+                              <div className="w-full h-full flex items-center justify-center opacity-40">
                                 <Crown className="w-8 h-8 rotate-12" />
                               </div>
                             ) : '')
                         }
                       </div>
-                      <div className="bg-slate-900/90 backdrop-blur px-2 py-1 rounded-md border border-slate-700 text-xs whitespace-nowrap flex items-center gap-2">
-                        {seatedUser.name}
-                        {userInRoom.isAdmin && seatedUser.id !== userInRoom.id && (
+                      <div className={`backdrop-blur px-2 py-1 rounded-md border text-xs whitespace-nowrap flex items-center gap-2 transition-colors shadow-sm ${
+                        seatedUser.id === userInRoom?.id 
+                          ? 'bg-blue-600/20 dark:bg-blue-600/30 border-blue-500/50 text-blue-700 dark:text-blue-200 font-bold' 
+                          : 'bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100'
+                      }`}>
+                        <span>{seatedUser.name}</span>
+                        {userInRoom?.isAdmin && seatedUser.id !== userInRoom.id && (
                           <button
                             onClick={() => handleRemoveUser(seatedUser.id)}
-                            className="hover:text-red-400 transition-colors"
+                            className="text-slate-400 hover:text-red-500 transition-colors"
                             title="Remove user"
                           >
                             <XCircle className="w-3 h-3" />
@@ -369,13 +396,13 @@ export default function App() {
                     </div>
                   ) : (
                     <button 
-                      onClick={() => !userInRoom.isObserver && handleChangeSeat(i)}
-                      disabled={userInRoom.isObserver}
-                      className={`w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-700 transition-colors group ${
-                        userInRoom.isObserver ? 'cursor-not-allowed' : 'hover:border-slate-500 hover:text-slate-500'
+                      onClick={() => !userInRoom?.isObserver && handleChangeSeat(i)}
+                      disabled={userInRoom?.isObserver}
+                      className={`w-12 h-12 rounded-full border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-300 dark:text-slate-700 transition-colors group ${
+                        userInRoom?.isObserver ? 'cursor-not-allowed' : 'hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-400 dark:hover:text-slate-500 bg-white/50 dark:bg-transparent'
                       }`}
                     >
-                      <UserIcon className={`w-6 h-6 ${!userInRoom.isObserver ? 'group-hover:scale-110' : 'opacity-20'} transition-transform`} />
+                      <UserIcon className={`w-6 h-6 ${!userInRoom?.isObserver ? 'group-hover:scale-110' : 'opacity-20'} transition-transform`} />
                     </button>
                   )}
                 </div>
@@ -385,79 +412,79 @@ export default function App() {
         </div>
       </main>
 
-      {/* Admin Panel */}
-      {userInRoom.isAdmin && (
-        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-2xl flex gap-4 items-center">
-          <div className="flex bg-slate-900 rounded-xl border border-slate-700 p-1">
-            <input 
-              type="text" 
-              placeholder="Task Title (e.g. Jira ID)" 
-              value={jiraId}
-              onChange={(e) => setJiraId(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSetTask()}
-              className="bg-transparent px-4 py-2 outline-none w-48 text-sm"
-            />
+      {/* Controls Area */}
+      <footer className="mt-auto pb-10 flex flex-col items-center gap-6">
+        {userInRoom?.isAdmin && (
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex gap-4 items-center">
+            <div className="flex bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-1">
+              <input 
+                type="text" 
+                placeholder="Task Title (e.g. Jira ID)" 
+                value={jiraId}
+                onChange={(e) => setJiraId(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSetTask()}
+                className="bg-transparent px-4 py-2 outline-none w-48 text-sm text-slate-800 dark:text-white placeholder-slate-400"
+              />
+              <button 
+                onClick={handleSetTask}
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2" />
             <button 
-              onClick={handleSetTask}
-              className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-blue-400"
+              onClick={handleReveal}
+              disabled={roomState.isRevealed}
+              className="px-6 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold flex items-center gap-2 transition-colors shadow-lg shadow-green-500/20"
             >
-              <Send className="w-5 h-5" />
+              <CheckCircle2 className="w-5 h-5" /> Reveal
+            </button>
+            <button 
+              onClick={handleReset}
+              className="px-6 py-2 bg-red-100 dark:bg-red-600/20 hover:bg-red-200 dark:hover:bg-red-600/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-600/50 rounded-xl font-bold flex items-center gap-2 transition-colors"
+            >
+              <XCircle className="w-5 h-5" /> Reset
             </button>
           </div>
-          <div className="h-8 w-[1px] bg-slate-700 mx-2" />
-          <button 
-            onClick={handleReveal}
-            disabled={roomState.isRevealed}
-            className="px-6 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold flex items-center gap-2 transition-colors"
-          >
-            <CheckCircle2 className="w-5 h-5" /> Reveal
-          </button>
-          <button 
-            onClick={handleReset}
-            className="px-6 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/50 rounded-xl font-bold flex items-center gap-2 transition-colors"
-          >
-            <XCircle className="w-5 h-5" /> Reset
-          </button>
-        </div>
-      )}
+        )}
 
-      {/* User Hand (Cards) */}
-      {!userInRoom.isAdmin && !userInRoom.isObserver && (
-        <div className="mt-8 flex justify-center gap-4">
-          {VOTE_VALUES.map((val) => (
+        {!userInRoom?.isAdmin && !userInRoom?.isObserver && (
+          <div className="flex justify-center gap-4">
+            {VOTE_VALUES.map((val) => (
+              <button
+                key={val}
+                onClick={() => handleVote(userInRoom?.vote === val ? null : val)}
+                className={`w-16 h-24 rounded-xl border-2 font-bold text-2xl transition-all hover:-translate-y-2 ${
+                  userInRoom?.vote === val 
+                  ? 'bg-blue-600 border-blue-400 -translate-y-4 shadow-xl shadow-blue-500/50 text-white' 
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-blue-300 dark:hover:border-slate-500 shadow-md'
+                }`}
+              >
+                {val}
+              </button>
+            ))}
             <button
-              key={val}
-              onClick={() => handleVote(userInRoom.vote === val ? null : val)}
-              className={`w-16 h-24 rounded-xl border-2 font-bold text-2xl transition-all hover:-translate-y-2 ${
-                userInRoom.vote === val 
-                ? 'bg-blue-600 border-blue-400 -translate-y-4 shadow-xl shadow-blue-500/50' 
-                : 'bg-slate-800 border-slate-700 hover:border-slate-500'
-              }`}
+              onClick={() => handleVote(null)}
+              className="ml-4 px-6 h-24 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 font-bold transition-all flex flex-col items-center justify-center gap-1 shadow-md"
             >
-              {val}
+              <XCircle className="w-6 h-6" />
+              <span className="text-xs">Clear</span>
             </button>
-          ))}
-          <button
-            onClick={() => handleVote(null)}
-            className="ml-4 px-6 h-24 rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold transition-all flex flex-col items-center justify-center gap-1"
-          >
-            <XCircle className="w-6 h-6" />
-            <span className="text-xs">Clear</span>
-          </button>
-        </div>
-      )}
+          </div>
+        )}
+      </footer>
 
-      {/* History Sidebar */}
       {showHistory && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-end">
-          <div className="w-full max-w-md bg-slate-800 h-full shadow-2xl p-8 border-l border-slate-700 overflow-y-auto">
+          <div className="w-full max-w-md bg-white dark:bg-slate-800 h-full shadow-2xl p-8 border-l border-slate-200 dark:border-slate-700 overflow-y-auto transition-colors">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold flex items-center gap-3">
-                <History className="text-blue-400" /> Voting History
+              <h2 className="text-2xl font-bold flex items-center gap-3 text-slate-800 dark:text-white">
+                <History className="text-blue-500 dark:text-blue-400" /> Voting History
               </h2>
               <button 
                 onClick={() => setShowHistory(false)}
-                className="p-2 hover:bg-slate-700 rounded-lg"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400"
               >
                 <XCircle className="w-6 h-6" />
               </button>
@@ -465,26 +492,26 @@ export default function App() {
 
             <div className="space-y-6">
               {roomState.history.length === 0 ? (
-                <p className="text-slate-500 italic">No voting history yet.</p>
+                <p className="text-slate-400 italic">No voting history yet.</p>
               ) : (
                 roomState.history.slice().reverse().map((entry, idx) => (
-                  <div key={idx} className="bg-slate-900 rounded-2xl p-6 border border-slate-700">
+                  <div key={idx} className="bg-slate-50 dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
-                        <h4 className="font-bold">{entry.task.title}</h4>
-                        <span className="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded text-xs font-bold border border-blue-500/30">
+                        <h4 className="font-bold text-slate-800 dark:text-white">{entry.task.title}</h4>
+                        <span className="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded text-xs font-bold border border-blue-200 dark:border-blue-500/30">
                           Avg: {entry.average}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-[10px] text-slate-400 font-medium">
                         {new Date(entry.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(entry.votes).map(([name, vote]) => (
-                        <div key={name} className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
-                          <span className="text-xs font-medium">{name}:</span>
-                          <span className="text-xs font-bold text-blue-400">{vote}</span>
+                        <div key={name} className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
+                          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{name}:</span>
+                          <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{vote}</span>
                         </div>
                       ))}
                     </div>
