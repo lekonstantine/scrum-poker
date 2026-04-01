@@ -68,10 +68,12 @@ io.on('connection', (socket) => {
       return;
     }
 
+    const randomSeat = availableSeats[Math.floor(Math.random() * availableSeats.length)];
+
     const newUser: User = {
       id: socket.id,
       ...userData,
-      seatIndex: availableSeats[0]!,
+      seatIndex: randomSeat!,
       vote: null,
       isAdmin: userData.name === 'Melody', // Only Melody is admin
     };
@@ -85,6 +87,16 @@ io.on('connection', (socket) => {
     const user = users.find(u => u.id === socket.id);
     if (user) {
       user.vote = vote;
+      io.emit('state-update', { users, currentTask, isRevealed, history });
+    }
+  });
+
+  socket.on('change-seat', (seatIndex: number) => {
+    const user = users.find(u => u.id === socket.id);
+    const isOccupied = users.some(u => u.seatIndex === seatIndex);
+    
+    if (user && !isOccupied && seatIndex >= 0 && seatIndex < MAX_SEATS) {
+      user.seatIndex = seatIndex;
       io.emit('state-update', { users, currentTask, isRevealed, history });
     }
   });

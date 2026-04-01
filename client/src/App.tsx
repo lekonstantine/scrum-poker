@@ -122,6 +122,12 @@ export default function App() {
     }
   };
 
+  const handleChangeSeat = (seatIndex: number) => {
+    if (socket) {
+      socket.emit('change-seat', seatIndex);
+    }
+  };
+
   const handleReveal = () => {
     if (socket && currentUser?.isAdmin) {
       socket.emit('reveal');
@@ -305,9 +311,12 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-                  <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-700">
-                    <UserIcon className="w-6 h-6" />
-                  </div>
+                  <button 
+                    onClick={() => handleChangeSeat(i)}
+                    className="w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-700 hover:border-slate-500 hover:text-slate-500 transition-colors group"
+                  >
+                    <UserIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                  </button>
                 )}
               </div>
             );
