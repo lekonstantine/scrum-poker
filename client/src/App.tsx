@@ -331,9 +331,9 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
+      <main className="flex-1 flex flex-col items-center justify-center relative">
         <div 
-          className="transition-transform duration-300 flex items-center justify-center"
+          className="transition-transform duration-300 flex items-center justify-center z-10"
           style={{ transform: `scale(${scale})` }}
         >
           {/* The Table */}
@@ -373,7 +373,7 @@ export default function App() {
                     <div className="flex flex-col items-center gap-2 relative">
                       {/* Reaction Overlay */}
                       {seatedUser.reaction && (
-                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-4xl animate-bounce pointer-events-none z-50 drop-shadow-lg">
+                        <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-5xl animate-bounce pointer-events-none z-[100] drop-shadow-2xl">
                           {seatedUser.reaction}
                         </div>
                       )}
@@ -430,9 +430,20 @@ export default function App() {
 
       {/* Floating Reactions Button */}
       {!userInRoom?.isObserver && (
-        <div className="fixed right-8 top-1/2 -translate-y-1/2 flex flex-col items-end gap-4 z-40">
+        <div className="fixed right-8 top-28 flex flex-col items-end gap-2 z-40">
+          <button
+            onClick={() => setShowReactions(!showReactions)}
+            className={`p-3 rounded-full shadow-lg border transition-all hover:scale-110 ${
+              showReactions 
+                ? 'bg-blue-600 border-blue-500 text-white' 
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-white shadow-sm'
+            }`}
+            title="Reactions"
+          >
+            <Smile size={24} />
+          </button>
           {showReactions && (
-            <div className="flex flex-col gap-2 bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl transition-all">
+            <div className="flex flex-col gap-1 bg-white dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl transition-all animate-in slide-in-from-top-2 fade-in duration-200">
               {REACTIONS.map((emoji) => (
                 <button
                   key={emoji}
@@ -440,24 +451,13 @@ export default function App() {
                     handleReaction(emoji);
                     setShowReactions(false);
                   }}
-                  className="w-12 h-12 flex items-center justify-center text-3xl hover:scale-125 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all"
+                  className="w-10 h-10 flex items-center justify-center text-2xl hover:scale-125 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all"
                 >
                   {emoji}
                 </button>
               ))}
             </div>
           )}
-          <button
-            onClick={() => setShowReactions(!showReactions)}
-            className={`p-4 rounded-full shadow-lg border transition-all hover:scale-110 ${
-              showReactions 
-                ? 'bg-blue-600 border-blue-500 text-white' 
-                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-white shadow-md'
-            }`}
-            title="Reactions"
-          >
-            <Smile size={28} />
-          </button>
         </div>
       )}
 
