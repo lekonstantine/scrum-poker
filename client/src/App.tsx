@@ -51,7 +51,12 @@ const CHARACTERS = [
 ];
 
 const VOTE_VALUES = ['1', '2', '3', '5', '8'];
-const REACTIONS = ['👍', '🔥', '👏', '😮', '😢', '🤔'];
+const REACTIONS = [
+  '👍', '❤️', '🔥', '👏', '🎉',
+  '🤔', '👀', '😮', '🤯', '💯',
+  '💀', '😭', '💅', '✨', '🗿',
+  '🤝', '🙌', '🤡', '✅', '❌'
+];
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
 
@@ -443,7 +448,7 @@ export default function App() {
             <Smile size={24} />
           </button>
           {showReactions && (
-            <div className="flex flex-col gap-1 bg-white dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl transition-all animate-in slide-in-from-top-2 fade-in duration-200">
+            <div className="grid grid-cols-5 gap-2 bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl transition-all animate-in slide-in-from-top-2 fade-in duration-200">
               {REACTIONS.map((emoji) => (
                 <button
                   key={emoji}
