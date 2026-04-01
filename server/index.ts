@@ -27,6 +27,7 @@ interface User {
   vote: string | null;
   isAdmin: boolean;
   isObserver: boolean;
+  reaction?: string | null;
 }
 
 interface Task {
@@ -47,7 +48,7 @@ let currentTask: Task | null = null;
 let isRevealed = false;
 let history: HistoryEntry[] = [];
 
-const MAX_SEATS = 10;
+const MAX_SEATS = 12;
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -60,7 +61,7 @@ io.on('connection', (socket) => {
       socket.emit('error', 'Этот персонаж уже занят');
       return;
     }
-    
+
     let seatIndex: number | null = null;
     if (!userData.isObserver) {
       const availableSeats = Array.from({ length: MAX_SEATS }, (_, i) => i)
@@ -98,10 +99,27 @@ io.on('connection', (socket) => {
   socket.on('change-seat', (seatIndex: number) => {
     const user = users.find(u => u.id === socket.id);
     const isOccupied = users.some(u => u.seatIndex === seatIndex);
-    
+
     if (user && !user.isObserver && !isOccupied && seatIndex >= 0 && seatIndex < MAX_SEATS) {
       user.seatIndex = seatIndex;
       io.emit('state-update', { users, currentTask, isRevealed, history });
+    }
+  });
+
+  socket.on('reaction', (emoji: string) => {
+    const user = users.find(u => u.id === socket.id);
+    if (user) {
+      user.reaction = emoji;
+      io.emit('state-update', { users, currentTask, isRevealed, history });
+
+      // Clear reaction after 3 seconds
+      setTimeout(() => {
+        const currentUser = users.find(u => u.id === socket.id);
+        if (currentUser && currentUser.reaction === emoji) {
+          currentUser.reaction = null;
+          io.emit('state-update', { users, currentTask, isRevealed, history });
+        }
+      }, 5000);
     }
   });
 

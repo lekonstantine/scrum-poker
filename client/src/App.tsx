@@ -9,7 +9,8 @@ import {
   Crown,
   LogOut,
   Sun,
-  Moon
+  Moon,
+  Smile
 } from 'lucide-react';
 
 // --- Types ---
@@ -22,6 +23,7 @@ interface User {
   vote: string | null;
   isAdmin: boolean;
   isObserver: boolean;
+  reaction?: string | null;
 }
 
 interface Task {
@@ -49,6 +51,7 @@ const CHARACTERS = [
 ];
 
 const VOTE_VALUES = ['1', '2', '3', '5', '8'];
+const REACTIONS = ['👍', '🔥', '👏', '😮', '😢', '🤔'];
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
 
@@ -70,6 +73,7 @@ export default function App() {
   });
   const [jiraId, setJiraId] = useState('');
   const [showHistory, setShowHistory] = useState(false);
+  const [showReactions, setShowReactions] = useState(false);
   const [scale, setScale] = useState(1);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
@@ -141,6 +145,12 @@ export default function App() {
   const handleVote = (value: string | null) => {
     if (socket) {
       socket.emit('vote', value);
+    }
+  };
+
+  const handleReaction = (emoji: string) => {
+    if (socket) {
+      socket.emit('reaction', emoji);
     }
   };
 
@@ -360,7 +370,13 @@ export default function App() {
                   style={{ transform: `translate(${x}px, ${y}px)` }}
                 >
                   {seatedUser ? (
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center gap-2 relative">
+                      {/* Reaction Overlay */}
+                      {seatedUser.reaction && (
+                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-4xl animate-bounce pointer-events-none z-50 drop-shadow-lg">
+                          {seatedUser.reaction}
+                        </div>
+                      )}
                       <div className={`w-16 h-24 rounded-lg border-2 flex items-center justify-center text-2xl font-bold transition-all duration-500 ${
                         (roomState.isRevealed ? revealedVote : seatedUser.vote)
                           ? (roomState.isRevealed 
@@ -411,6 +427,39 @@ export default function App() {
           </div>
         </div>
       </main>
+
+      {/* Floating Reactions Button */}
+      {!userInRoom?.isObserver && (
+        <div className="fixed right-8 top-1/2 -translate-y-1/2 flex flex-col items-end gap-4 z-40">
+          {showReactions && (
+            <div className="flex flex-col gap-2 bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl transition-all">
+              {REACTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => {
+                    handleReaction(emoji);
+                    setShowReactions(false);
+                  }}
+                  className="w-12 h-12 flex items-center justify-center text-3xl hover:scale-125 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => setShowReactions(!showReactions)}
+            className={`p-4 rounded-full shadow-lg border transition-all hover:scale-110 ${
+              showReactions 
+                ? 'bg-blue-600 border-blue-500 text-white' 
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-white shadow-md'
+            }`}
+            title="Reactions"
+          >
+            <Smile size={28} />
+          </button>
+        </div>
+      )}
 
       {/* Controls Area */}
       <footer className="mt-auto pb-10 flex flex-col items-center gap-6">
