@@ -173,11 +173,11 @@ export default function App() {
   };
 
   const handleSetTask = () => {
-    if (!jiraId) return;
+    if (!jiraId.trim()) return;
     if (socket) {
       socket.emit('set-task', {
-        id: jiraId,
-        title: jiraId,
+        id: jiraId.trim(),
+        title: jiraId.trim(),
         description: 'No description provided'
       });
       setJiraId('');
@@ -463,63 +463,82 @@ export default function App() {
 
       {/* Controls Area */}
       <footer className="mt-auto pb-10 flex flex-col items-center gap-6">
+        {/* Admin Panel */}
         {userInRoom?.isAdmin && (
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex gap-4 items-center">
-            <div className="flex bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-1">
-              <input 
-                type="text" 
-                placeholder="Task Title (e.g. Jira ID)" 
-                value={jiraId}
-                onChange={(e) => setJiraId(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSetTask()}
-                className="bg-transparent px-4 py-2 outline-none w-48 text-sm text-slate-800 dark:text-white placeholder-slate-400"
-              />
-              <button 
-                onClick={handleSetTask}
-                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2" />
-            <button 
-              onClick={handleReveal}
-              disabled={roomState.isRevealed}
-              className="px-6 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold flex items-center gap-2 transition-colors shadow-lg shadow-green-500/20"
-            >
-              <CheckCircle2 className="w-5 h-5" /> Reveal
-            </button>
-            <button 
-              onClick={handleReset}
-              className="px-6 py-2 bg-red-100 dark:bg-red-600/20 hover:bg-red-200 dark:hover:bg-red-600/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-600/50 rounded-xl font-bold flex items-center gap-2 transition-colors"
-            >
-              <XCircle className="w-5 h-5" /> Reset
-            </button>
+          <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex gap-4 items-center animate-in fade-in zoom-in duration-300">
+            {!roomState.currentTask ? (
+              <div className="flex bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-1">
+                <input 
+                  type="text" 
+                  placeholder="Enter Task or Jira ID..." 
+                  value={jiraId}
+                  onChange={(e) => setJiraId(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSetTask()}
+                  className="bg-transparent px-4 py-2 outline-none w-64 text-sm text-slate-800 dark:text-white placeholder-slate-400"
+                />
+                <button 
+                  onClick={handleSetTask}
+                  disabled={!jiraId.trim()}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2 font-bold text-sm"
+                >
+                  <Send className="w-4 h-4" /> Start Voting
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-4 items-center">
+                <div className="px-4 py-2 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-500 dark:text-slate-400 max-w-xs truncate">
+                  Topic: <span className="text-slate-800 dark:text-white font-bold ml-1">{roomState.currentTask.title}</span>
+                </div>
+                <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2" />
+                <button 
+                  onClick={handleReveal}
+                  disabled={roomState.isRevealed}
+                  className="px-6 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold flex items-center gap-2 transition-colors shadow-lg shadow-green-500/20"
+                >
+                  <CheckCircle2 className="w-5 h-5" /> Reveal
+                </button>
+                <button 
+                  onClick={handleReset}
+                  className="px-6 py-2 bg-red-100 dark:bg-red-600/20 hover:bg-red-200 dark:hover:bg-red-600/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-600/50 rounded-xl font-bold flex items-center gap-2 transition-colors"
+                >
+                  <XCircle className="w-5 h-5" /> Reset / New Task
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {!userInRoom?.isAdmin && !userInRoom?.isObserver && (
-          <div className="flex justify-center gap-4">
-            {VOTE_VALUES.map((val) => (
-              <button
-                key={val}
-                onClick={() => handleVote(userInRoom?.vote === val ? null : val)}
-                className={`w-16 h-24 rounded-xl border-2 font-bold text-2xl transition-all hover:-translate-y-2 ${
-                  userInRoom?.vote === val 
-                  ? 'bg-blue-600 border-blue-400 -translate-y-4 shadow-xl shadow-blue-500/50 text-white' 
-                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-blue-300 dark:hover:border-slate-500 shadow-md'
-                }`}
-              >
-                {val}
-              </button>
-            ))}
-            <button
-              onClick={() => handleVote(null)}
-              className="ml-4 px-6 h-24 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 font-bold transition-all flex flex-col items-center justify-center gap-1 shadow-md"
-            >
-              <XCircle className="w-6 h-6" />
-              <span className="text-xs">Clear</span>
-            </button>
+          <div className="flex flex-col items-center gap-4 w-full">
+            {roomState.currentTask ? (
+              <div className="flex justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {VOTE_VALUES.map((val) => (
+                  <button
+                    key={val}
+                    onClick={() => handleVote(userInRoom?.vote === val ? null : val)}
+                    className={`w-16 h-24 rounded-xl border-2 font-bold text-2xl transition-all hover:-translate-y-2 ${
+                      userInRoom?.vote === val 
+                      ? 'bg-blue-600 border-blue-400 -translate-y-4 shadow-xl shadow-blue-500/50 text-white' 
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-blue-300 dark:hover:border-slate-500 shadow-md'
+                    }`}
+                  >
+                    {val}
+                  </button>
+                ))}
+                <button
+                  onClick={() => handleVote(null)}
+                  className="ml-4 px-6 h-24 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 font-bold transition-all flex flex-col items-center justify-center gap-1 shadow-md"
+                >
+                  <XCircle className="w-6 h-6" />
+                  <span className="text-xs">Clear</span>
+                </button>
+              </div>
+            ) : (
+              <div className="bg-white/50 dark:bg-slate-800/50 px-8 py-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500 italic flex items-center gap-3">
+                <Smile className="w-5 h-5 opacity-50 text-blue-500" />
+                Wait for the Scrum Master to start voting...
+              </div>
+            )}
           </div>
         )}
       </footer>
