@@ -23,9 +23,10 @@ interface User {
   name: string;
   title: string;
   avatar: string;
-  seatIndex: number;
+  seatIndex: number | null;
   vote: string | null;
   isAdmin: boolean;
+  isObserver: boolean;
 }
 
 interface Task {
@@ -54,28 +55,31 @@ io.on('connection', (socket) => {
   // Send initial state to the new connection
   socket.emit('state-update', { users, currentTask, isRevealed, history });
 
-  socket.on('join', (userData: { name: string; title: string; avatar: string }) => {
+  socket.on('join', (userData: { name: string; title: string; avatar: string; isObserver?: boolean }) => {
     if (users.some(u => u.name === userData.name)) {
       socket.emit('error', 'Этот персонаж уже занят');
       return;
     }
     
-    const availableSeats = Array.from({ length: MAX_SEATS }, (_, i) => i)
-      .filter(seat => !users.some(u => u.seatIndex === seat));
+    let seatIndex: number | null = null;
+    if (!userData.isObserver) {
+      const availableSeats = Array.from({ length: MAX_SEATS }, (_, i) => i)
+        .filter(seat => !users.some(u => u.seatIndex === seat));
 
-    if (availableSeats.length === 0) {
-      socket.emit('error', 'No seats available');
-      return;
+      if (availableSeats.length === 0) {
+        socket.emit('error', 'No seats available');
+        return;
+      }
+      seatIndex = availableSeats[Math.floor(Math.random() * availableSeats.length)]!;
     }
-
-    const randomSeat = availableSeats[Math.floor(Math.random() * availableSeats.length)];
 
     const newUser: User = {
       id: socket.id,
       ...userData,
-      seatIndex: randomSeat!,
+      seatIndex,
       vote: null,
       isAdmin: userData.name === 'Melody', // Only Melody is admin
+      isObserver: !!userData.isObserver,
     };
 
     users.push(newUser);
@@ -95,7 +99,7 @@ io.on('connection', (socket) => {
     const user = users.find(u => u.id === socket.id);
     const isOccupied = users.some(u => u.seatIndex === seatIndex);
     
-    if (user && !isOccupied && seatIndex >= 0 && seatIndex < MAX_SEATS) {
+    if (user && !user.isObserver && !isOccupied && seatIndex >= 0 && seatIndex < MAX_SEATS) {
       user.seatIndex = seatIndex;
       io.emit('state-update', { users, currentTask, isRevealed, history });
     }

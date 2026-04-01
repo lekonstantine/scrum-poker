@@ -16,9 +16,10 @@ interface User {
   name: string;
   title: string;
   avatar: string;
-  seatIndex: number;
+  seatIndex: number | null;
   vote: string | null;
   isAdmin: boolean;
+  isObserver: boolean;
 }
 
 interface Task {
@@ -123,7 +124,7 @@ export default function App() {
   };
 
   const handleChangeSeat = (seatIndex: number) => {
-    if (socket) {
+    if (socket && !userInRoom.isObserver) {
       socket.emit('change-seat', seatIndex);
     }
   };
@@ -196,19 +197,36 @@ export default function App() {
             );
           })}
         </div>
-        <button
-          onClick={handleJoin}
-          disabled={!selectedChar}
-          className="mt-12 px-12 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xl font-bold rounded-full transition-colors shadow-lg shadow-blue-500/20"
-        >
-          Enter Room
-        </button>
+        <div className="mt-12 flex gap-4 items-center">
+          <button
+            onClick={handleJoin}
+            disabled={!selectedChar}
+            className="px-12 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xl font-bold rounded-full transition-colors shadow-lg shadow-blue-500/20"
+          >
+            Enter Room
+          </button>
+          <button
+            onClick={() => {
+              const name = `Guest ${Math.floor(Math.random() * 1000)}`;
+              socket?.emit('join', {
+                name: name,
+                title: 'Observer',
+                avatar: '👀',
+                isObserver: true
+              });
+            }}
+            className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xl font-bold rounded-full transition-colors border border-slate-700"
+          >
+            Join as Guest
+          </button>
+        </div>
       </div>
     );
   }
 
   // Poker Room Layout
   const userInRoom = roomState.users.find(u => u.id === currentUser?.id) || currentUser;
+  const observers = roomState.users.filter(u => u.isObserver);
   const latestHistory = roomState.history[roomState.history.length - 1];
 
   return (
@@ -222,10 +240,29 @@ export default function App() {
           <div>
             <h2 className="font-bold flex items-center gap-2">
               {userInRoom.name} {userInRoom.isAdmin && <Crown className="w-4 h-4 text-yellow-400" />}
+              {userInRoom.isObserver && <span className="text-xs bg-slate-700 px-2 py-0.5 rounded text-slate-400 ml-2">Observer</span>}
             </h2>
             <p className="text-xs text-slate-400">{userInRoom.title}</p>
           </div>
         </div>
+
+        {/* Observers List */}
+        {observers.length > 0 && (
+          <div className="flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700/50">
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mr-2">Observers</span>
+            <div className="flex -space-x-2">
+              {observers.map((obs) => (
+                <div 
+                  key={obs.id} 
+                  className="w-8 h-8 rounded-full bg-slate-800 border-2 border-slate-900 flex items-center justify-center text-lg shadow-lg hover:scale-110 transition-transform cursor-help"
+                  title={`${obs.name} (Observer)`}
+                >
+                  {obs.avatar}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-4">
           <button 
@@ -312,10 +349,13 @@ export default function App() {
                   </div>
                 ) : (
                   <button 
-                    onClick={() => handleChangeSeat(i)}
-                    className="w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-700 hover:border-slate-500 hover:text-slate-500 transition-colors group"
+                    onClick={() => !userInRoom.isObserver && handleChangeSeat(i)}
+                    disabled={userInRoom.isObserver}
+                    className={`w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-700 transition-colors group ${
+                      userInRoom.isObserver ? 'cursor-not-allowed' : 'hover:border-slate-500 hover:text-slate-500'
+                    }`}
                   >
-                    <UserIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                    <UserIcon className={`w-6 h-6 ${!userInRoom.isObserver ? 'group-hover:scale-110' : 'opacity-20'} transition-transform`} />
                   </button>
                 )}
               </div>
@@ -361,7 +401,7 @@ export default function App() {
       )}
 
       {/* User Hand (Cards) */}
-      {!userInRoom.isAdmin && (
+      {!userInRoom.isAdmin && !userInRoom.isObserver && (
         <div className="mt-8 flex justify-center gap-4">
           {VOTE_VALUES.map((val) => (
             <button
