@@ -68,6 +68,21 @@ export default function App() {
   });
   const [jiraId, setJiraId] = useState('');
   const [showHistory, setShowHistory] = useState(false);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const minWidth = 1100; // Desired width for full table layout
+      const minHeight = 800; // Desired height for full table layout
+      const scaleX = window.innerWidth / minWidth;
+      const scaleY = (window.innerHeight - 300) / (minHeight - 300); // 300 for UI overhead
+      setScale(Math.min(1, scaleX, scaleY));
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     // If SOCKET_URL is / use current origin, otherwise use the env value
@@ -282,85 +297,91 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center relative">
-        {/* The Table */}
-        <div className="w-[800px] h-[400px] bg-slate-800 rounded-[200px] border-[12px] border-slate-700 shadow-2xl relative flex items-center justify-center -translate-y-16">
-          <div className="text-center max-w-md p-8">
-            {roomState.currentTask ? (
-              <>
-                <h4 className="text-2xl font-bold mb-4 line-clamp-2 flex items-center justify-center gap-3">
-                  {roomState.currentTask.title}
-                  {roomState.isRevealed && (
-                    <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-lg">
-                      {latestHistory ? latestHistory.average : '0.0'}
-                    </span>
+      <main className="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
+        {/* The Scaling Wrapper */}
+        <div 
+          className="transition-transform duration-300 flex items-center justify-center"
+          style={{ transform: `scale(${scale})` }}
+        >
+          {/* The Table */}
+          <div className="w-[800px] h-[400px] bg-slate-800 rounded-[200px] border-[12px] border-slate-700 shadow-2xl relative flex items-center justify-center">
+            <div className="text-center max-w-md p-8">
+              {roomState.currentTask ? (
+                <>
+                  <h4 className="text-2xl font-bold mb-4 line-clamp-2 flex items-center justify-center gap-3">
+                    {roomState.currentTask.title}
+                    {roomState.isRevealed && (
+                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-lg">
+                        {latestHistory ? latestHistory.average : '0.0'}
+                      </span>
+                    )}
+                  </h4>
+                </>
+              ) : (
+                <p className="text-slate-500 text-xl italic">Waiting for Admin to start...</p>
+              )}
+            </div>
+
+            {/* Seats */}
+            {[...Array(10)].map((_, i) => {
+              const angle = (i * 36) * (Math.PI / 180);
+              const x = Math.cos(angle) * 440;
+              const y = Math.sin(angle) * 240;
+              const seatedUser = roomState.users.find(u => u.seatIndex === i);
+              const revealedVote = roomState.isRevealed && latestHistory ? latestHistory.votes[seatedUser?.name || ''] : null;
+
+              return (
+                <div 
+                  key={i}
+                  className="absolute transition-all duration-500"
+                  style={{ transform: `translate(${x}px, ${y}px)` }}
+                >
+                  {seatedUser ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className={`w-16 h-24 rounded-lg border-2 flex items-center justify-center text-2xl font-bold transition-all duration-500 ${
+                        (roomState.isRevealed ? revealedVote : seatedUser.vote)
+                          ? (roomState.isRevealed 
+                              ? 'bg-blue-600 border-blue-400 scale-110 shadow-lg shadow-blue-500/50' 
+                              : 'bg-indigo-900 border-indigo-500 shadow-md rotate-3') 
+                          : 'bg-slate-900/50 border-slate-700/50'
+                      }`}>
+                        {roomState.isRevealed 
+                          ? revealedVote 
+                          : (seatedUser.vote ? (
+                              <div className="w-full h-full flex items-center justify-center opacity-20">
+                                <Crown className="w-8 h-8 rotate-12" />
+                              </div>
+                            ) : '')
+                        }
+                      </div>
+                      <div className="bg-slate-900/90 backdrop-blur px-2 py-1 rounded-md border border-slate-700 text-xs whitespace-nowrap flex items-center gap-2">
+                        {seatedUser.name}
+                        {userInRoom.isAdmin && seatedUser.id !== userInRoom.id && (
+                          <button
+                            onClick={() => handleRemoveUser(seatedUser.id)}
+                            className="hover:text-red-400 transition-colors"
+                            title="Remove user"
+                          >
+                            <XCircle className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => !userInRoom.isObserver && handleChangeSeat(i)}
+                      disabled={userInRoom.isObserver}
+                      className={`w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-700 transition-colors group ${
+                        userInRoom.isObserver ? 'cursor-not-allowed' : 'hover:border-slate-500 hover:text-slate-500'
+                      }`}
+                    >
+                      <UserIcon className={`w-6 h-6 ${!userInRoom.isObserver ? 'group-hover:scale-110' : 'opacity-20'} transition-transform`} />
+                    </button>
                   )}
-                </h4>
-              </>
-            ) : (
-              <p className="text-slate-500 text-xl italic">Waiting for Admin to start...</p>
-            )}
+                </div>
+              );
+            })}
           </div>
-
-          {/* Seats */}
-          {[...Array(10)].map((_, i) => {
-            const angle = (i * 36) * (Math.PI / 180);
-            const x = Math.cos(angle) * 440;
-            const y = Math.sin(angle) * 240;
-            const seatedUser = roomState.users.find(u => u.seatIndex === i);
-            const revealedVote = roomState.isRevealed && latestHistory ? latestHistory.votes[seatedUser?.name || ''] : null;
-
-            return (
-              <div 
-                key={i}
-                className="absolute transition-all duration-500"
-                style={{ transform: `translate(${x}px, ${y}px)` }}
-              >
-                {seatedUser ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <div className={`w-16 h-24 rounded-lg border-2 flex items-center justify-center text-2xl font-bold transition-all duration-500 ${
-                      (roomState.isRevealed ? revealedVote : seatedUser.vote)
-                        ? (roomState.isRevealed 
-                            ? 'bg-blue-600 border-blue-400 scale-110 shadow-lg shadow-blue-500/50' 
-                            : 'bg-indigo-900 border-indigo-500 shadow-md rotate-3') 
-                        : 'bg-slate-900/50 border-slate-700/50'
-                    }`}>
-                      {roomState.isRevealed 
-                        ? revealedVote 
-                        : (seatedUser.vote ? (
-                            <div className="w-full h-full flex items-center justify-center opacity-20">
-                              <Crown className="w-8 h-8 rotate-12" />
-                            </div>
-                          ) : '')
-                      }
-                    </div>
-                    <div className="bg-slate-900/90 backdrop-blur px-2 py-1 rounded-md border border-slate-700 text-xs whitespace-nowrap flex items-center gap-2">
-                      {seatedUser.name}
-                      {userInRoom.isAdmin && seatedUser.id !== userInRoom.id && (
-                        <button
-                          onClick={() => handleRemoveUser(seatedUser.id)}
-                          className="hover:text-red-400 transition-colors"
-                          title="Remove user"
-                        >
-                          <XCircle className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <button 
-                    onClick={() => !userInRoom.isObserver && handleChangeSeat(i)}
-                    disabled={userInRoom.isObserver}
-                    className={`w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-700 transition-colors group ${
-                      userInRoom.isObserver ? 'cursor-not-allowed' : 'hover:border-slate-500 hover:text-slate-500'
-                    }`}
-                  >
-                    <UserIcon className={`w-6 h-6 ${!userInRoom.isObserver ? 'group-hover:scale-110' : 'opacity-20'} transition-transform`} />
-                  </button>
-                )}
-              </div>
-            );
-          })}
         </div>
       </main>
 
