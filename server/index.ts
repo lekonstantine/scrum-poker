@@ -110,6 +110,7 @@ io.on('connection', (socket) => {
         const average = count > 0 ? Number((sum / count).toFixed(1)) : 0;
         history.push({ task: { ...currentTask }, votes, average, timestamp: Date.now() });
       }
+      users.forEach(u => u.vote = null);
       io.emit('state-update', { users, currentTask, isRevealed, history });
     }
   });

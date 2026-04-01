@@ -202,19 +202,22 @@ export default function App() {
   }
 
   // Poker Room Layout
+  const userInRoom = roomState.users.find(u => u.id === currentUser?.id) || currentUser;
+  const latestHistory = roomState.history[roomState.history.length - 1];
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-6 overflow-hidden flex flex-col">
       {/* Header */}
       <header className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
           <div className="bg-slate-800 p-3 rounded-xl border border-slate-700">
-            <span className="text-2xl">{currentUser.avatar}</span>
+            <span className="text-2xl">{userInRoom.avatar}</span>
           </div>
           <div>
             <h2 className="font-bold flex items-center gap-2">
-              {currentUser.name} {currentUser.isAdmin && <Crown className="w-4 h-4 text-yellow-400" />}
+              {userInRoom.name} {userInRoom.isAdmin && <Crown className="w-4 h-4 text-yellow-400" />}
             </h2>
-            <p className="text-xs text-slate-400">{currentUser.title}</p>
+            <p className="text-xs text-slate-400">{userInRoom.title}</p>
           </div>
         </div>
 
@@ -246,11 +249,7 @@ export default function App() {
                   {roomState.currentTask.title}
                   {roomState.isRevealed && (
                     <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-lg">
-                      {(() => {
-                        const votes = roomState.users.map(u => u.vote).filter(Boolean) as string[];
-                        const sum = votes.reduce((acc, v) => acc + parseFloat(v), 0);
-                        return (sum / votes.length || 0).toFixed(1);
-                      })()}
+                      {latestHistory ? latestHistory.average : '0.0'}
                     </span>
                   )}
                 </h4>
@@ -266,6 +265,7 @@ export default function App() {
             const x = Math.cos(angle) * 440;
             const y = Math.sin(angle) * 240;
             const seatedUser = roomState.users.find(u => u.seatIndex === i);
+            const revealedVote = roomState.isRevealed && latestHistory ? latestHistory.votes[seatedUser?.name || ''] : null;
 
             return (
               <div 
@@ -276,14 +276,14 @@ export default function App() {
                 {seatedUser ? (
                   <div className="flex flex-col items-center gap-2">
                     <div className={`w-16 h-24 rounded-lg border-2 flex items-center justify-center text-2xl font-bold transition-all duration-500 ${
-                      seatedUser.vote 
+                      (roomState.isRevealed ? revealedVote : seatedUser.vote)
                         ? (roomState.isRevealed 
                             ? 'bg-blue-600 border-blue-400 scale-110 shadow-lg shadow-blue-500/50' 
                             : 'bg-indigo-900 border-indigo-500 shadow-md rotate-3') 
                         : 'bg-slate-900/50 border-slate-700/50'
                     }`}>
                       {roomState.isRevealed 
-                        ? seatedUser.vote 
+                        ? revealedVote 
                         : (seatedUser.vote ? (
                             <div className="w-full h-full flex items-center justify-center opacity-20">
                               <Crown className="w-8 h-8 rotate-12" />
@@ -293,7 +293,7 @@ export default function App() {
                     </div>
                     <div className="bg-slate-900/90 backdrop-blur px-2 py-1 rounded-md border border-slate-700 text-xs whitespace-nowrap flex items-center gap-2">
                       {seatedUser.name}
-                      {currentUser.isAdmin && seatedUser.id !== currentUser.id && (
+                      {userInRoom.isAdmin && seatedUser.id !== userInRoom.id && (
                         <button
                           onClick={() => handleRemoveUser(seatedUser.id)}
                           className="hover:text-red-400 transition-colors"
@@ -316,7 +316,7 @@ export default function App() {
       </main>
 
       {/* Admin Panel */}
-      {currentUser.isAdmin && (
+      {userInRoom.isAdmin && (
         <div className="fixed bottom-32 left-1/2 -translate-x-1/2 bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-2xl flex gap-4 items-center">
           <div className="flex bg-slate-900 rounded-xl border border-slate-700 p-1">
             <input 
@@ -337,7 +337,8 @@ export default function App() {
           <div className="h-8 w-[1px] bg-slate-700 mx-2" />
           <button 
             onClick={handleReveal}
-            className="px-6 py-2 bg-green-600 hover:bg-green-500 rounded-xl font-bold flex items-center gap-2 transition-colors"
+            disabled={roomState.isRevealed}
+            className="px-6 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold flex items-center gap-2 transition-colors"
           >
             <CheckCircle2 className="w-5 h-5" /> Reveal
           </button>
@@ -351,28 +352,30 @@ export default function App() {
       )}
 
       {/* User Hand (Cards) */}
-      <div className="mt-8 flex justify-center gap-4">
-        {VOTE_VALUES.map((val) => (
+      {!userInRoom.isAdmin && (
+        <div className="mt-8 flex justify-center gap-4">
+          {VOTE_VALUES.map((val) => (
+            <button
+              key={val}
+              onClick={() => handleVote(userInRoom.vote === val ? null : val)}
+              className={`w-16 h-24 rounded-xl border-2 font-bold text-2xl transition-all hover:-translate-y-2 ${
+                userInRoom.vote === val 
+                ? 'bg-blue-600 border-blue-400 -translate-y-4 shadow-xl shadow-blue-500/50' 
+                : 'bg-slate-800 border-slate-700 hover:border-slate-500'
+              }`}
+            >
+              {val}
+            </button>
+          ))}
           <button
-            key={val}
-            onClick={() => handleVote(currentUser.vote === val ? null : val)}
-            className={`w-16 h-24 rounded-xl border-2 font-bold text-2xl transition-all hover:-translate-y-2 ${
-              currentUser.vote === val 
-              ? 'bg-blue-600 border-blue-400 -translate-y-4 shadow-xl shadow-blue-500/50' 
-              : 'bg-slate-800 border-slate-700 hover:border-slate-500'
-            }`}
+            onClick={() => handleVote(null)}
+            className="ml-4 px-6 h-24 rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold transition-all flex flex-col items-center justify-center gap-1"
           >
-            {val}
+            <XCircle className="w-6 h-6" />
+            <span className="text-xs">Clear</span>
           </button>
-        ))}
-        <button
-          onClick={() => handleVote(null)}
-          className="ml-4 px-6 h-24 rounded-xl border-2 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold transition-all flex flex-col items-center justify-center gap-1"
-        >
-          <XCircle className="w-6 h-6" />
-          <span className="text-xs">Clear</span>
-        </button>
-      </div>
+        </div>
+      )}
 
       {/* History Sidebar */}
       {showHistory && (
