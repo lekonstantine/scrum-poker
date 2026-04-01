@@ -118,6 +118,7 @@ io.on('connection', (socket) => {
     const admin = users.find(u => u.id === socket.id && u.isAdmin);
     if (admin) {
       isRevealed = false;
+      currentTask = null;
       users.forEach(u => u.vote = null);
       io.emit('state-update', { users, currentTask, isRevealed });
     }
