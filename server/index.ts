@@ -133,7 +133,7 @@ io.on('connection', (socket) => {
     const user = users.find(u => u.id === socket.id);
     const isOccupied = users.some(u => u.seatIndex === seatIndex);
 
-    if (user && !user.isObserver && !isOccupied && seatIndex >= 0 && seatIndex < MAX_SEATS) {
+    if (user && !user.isObserver && !user.isAdmin && !isOccupied && seatIndex >= 0 && seatIndex < MAX_SEATS) {
       user.seatIndex = seatIndex;
       io.emit('state-update', { users, currentTask, isRevealed, history, messages });
     }

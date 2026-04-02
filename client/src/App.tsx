@@ -325,7 +325,7 @@ export default function App() {
   };
 
   const handleChangeSeat = (seatIndex: number) => {
-    if (socket && userInRoom && !userInRoom.isObserver) {
+    if (socket && userInRoom && !userInRoom.isObserver && !userInRoom.isAdmin) {
       socket.emit('change-seat', seatIndex);
     }
   };
@@ -659,13 +659,13 @@ export default function App() {
                     </div>
                   ) : (
                     <button 
-                      onClick={() => !userInRoom?.isObserver && handleChangeSeat(i)}
-                      disabled={userInRoom?.isObserver}
+                      onClick={() => !userInRoom?.isObserver && !userInRoom?.isAdmin && handleChangeSeat(i)}
+                      disabled={userInRoom?.isObserver || userInRoom?.isAdmin}
                       className={`w-12 h-12 rounded-full border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-300 dark:text-slate-700 transition-colors group ${
-                        userInRoom?.isObserver ? 'cursor-not-allowed' : 'hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-400 dark:hover:text-slate-500 bg-white/50 dark:bg-transparent'
+                        userInRoom?.isObserver || userInRoom?.isAdmin ? 'cursor-not-allowed opacity-40' : 'hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-400 dark:hover:text-slate-500 bg-white/50 dark:bg-transparent'
                       }`}
                     >
-                      <UserIcon className={`w-6 h-6 ${!userInRoom?.isObserver ? 'group-hover:scale-110' : 'opacity-20'} transition-transform`} />
+                      <UserIcon className={`w-6 h-6 ${(!userInRoom?.isObserver && !userInRoom?.isAdmin) ? 'group-hover:scale-110' : 'opacity-20'} transition-transform`} />
                     </button>
                   )}
                 </div>
