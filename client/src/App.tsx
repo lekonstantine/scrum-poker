@@ -400,7 +400,7 @@ export default function App() {
 
   const userInRoom = roomState.users.find(u => u.id === currentUser?.id) || currentUser;
   const observers = roomState.users.filter(u => u.isObserver);
-  const scrumMaster = roomState.users.find(u => u.isAdmin);
+  const scrumMasters = roomState.users.filter(u => u.isAdmin);
   const latestHistory = roomState.history[roomState.history.length - 1];
   const lastChatMessage = roomState.messages[roomState.messages.length - 1];
 
@@ -505,25 +505,30 @@ export default function App() {
           </div>
         </div>
 
-        {/* Roles Panel: Scrum Master & Observers */}
+        {/* Roles Panel: Scrum Masters & Observers */}
         <div className="flex items-center gap-3">
-          {scrumMaster && (
-            <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700/50 shadow-sm backdrop-blur-md relative">
-              {scrumMaster.reaction && (
-                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 text-3xl animate-bounce pointer-events-none z-[100] drop-shadow-xl">
-                  {scrumMaster.reaction}
-                </div>
-              )}
+          {scrumMasters.length > 0 && (
+            <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700/50 shadow-sm backdrop-blur-md">
               <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mr-1">Scrum Master</span>
-              <div 
-                className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border-2 border-yellow-400 flex items-center justify-center text-lg shadow-lg"
-                title={`${scrumMaster.name} (Scrum Master)`}
-              >
-                {scrumMaster.avatar}
+              <div className="flex -space-x-2">
+                {scrumMasters.map((sm) => (
+                  <div key={sm.id} className="relative group/sm">
+                    {sm.reaction && (
+                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 text-3xl animate-bounce pointer-events-none z-[100] drop-shadow-xl">
+                        {sm.reaction}
+                      </div>
+                    )}
+                    <div
+                      className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border-2 border-yellow-400 flex items-center justify-center text-lg shadow-lg hover:z-10 transition-all transform hover:scale-110"
+                      title={`${sm.name} (Scrum Master)`}
+                    >
+                      {sm.avatar}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
-
           {observers.length > 0 && (
             <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700/50 shadow-sm backdrop-blur-md">
               <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mr-2">Observers</span>
