@@ -1,0 +1,25 @@
+{
+  "name": "scrum-poker",
+  "version": "1.0.0",
+  "description": "A real-time Scrum Poker application for development teams.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lekonstantine/scrum-poker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lekonstantine/scrum-poker/issues"
+  },
+  "homepage": "https://github.com/lekonstantine/scrum-poker#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
