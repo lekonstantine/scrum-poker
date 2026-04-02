@@ -551,14 +551,14 @@ export default function App() {
         )}
 
         {!userInRoom?.isAdmin && !userInRoom?.isObserver && (
-          <div className="flex flex-col items-center gap-4 w-full">
+          <div className="flex flex-col items-center gap-4 w-full px-4">
             {roomState.currentTask ? (
-              <div className="flex justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {VOTE_VALUES.map((val) => (
                   <button
                     key={val}
                     onClick={() => handleVote(userInRoom?.vote === val ? null : val)}
-                    className={`w-16 h-24 rounded-xl border-2 font-bold text-2xl transition-all hover:-translate-y-2 ${
+                    className={`w-14 h-20 sm:w-16 sm:h-24 rounded-xl border-2 font-bold text-xl sm:text-2xl transition-all hover:-translate-y-2 ${
                       userInRoom?.vote === val 
                       ? 'bg-blue-600 border-blue-400 -translate-y-4 shadow-xl shadow-blue-500/50 text-white' 
                       : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-blue-300 dark:hover:border-slate-500 shadow-md'
@@ -569,10 +569,10 @@ export default function App() {
                 ))}
                 <button
                   onClick={() => handleVote(null)}
-                  className="ml-4 px-6 h-24 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 font-bold transition-all flex flex-col items-center justify-center gap-1 shadow-md"
+                  className="px-4 sm:px-6 h-20 sm:h-24 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 font-bold transition-all flex flex-col items-center justify-center gap-1 shadow-md"
                 >
-                  <XCircle className="w-6 h-6" />
-                  <span className="text-xs">Clear</span>
+                  <XCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="text-[10px] sm:text-xs">Clear</span>
                 </button>
               </div>
             ) : (
