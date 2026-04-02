@@ -568,11 +568,15 @@ export default function App() {
               const seatedUser = roomState.users.find(u => u.seatIndex === i);
               const revealedVote = roomState.isRevealed && latestHistory ? latestHistory.votes[seatedUser?.name || ''] : null;
 
+              // When the whole table scales down, we keep users a bit larger
+              // this ensures names and cards remain readable
+              const uiScale = scale < 0.8 ? 0.8 / scale : 1;
+
               return (
                 <div 
                   key={i}
                   className="absolute transition-all duration-500"
-                  style={{ transform: `translate(${x}px, ${y}px)` }}
+                  style={{ transform: `translate(${x}px, ${y}px) scale(${uiScale})` }}
                 >
                   {seatedUser ? (
                     <div className="flex flex-col items-center gap-2 relative">
@@ -598,7 +602,7 @@ export default function App() {
                             ) : '')
                         }
                       </div>
-                      <div className={`backdrop-blur px-2 py-1 rounded-md border text-xs whitespace-nowrap flex items-center gap-2 transition-colors shadow-sm ${
+                      <div className={`backdrop-blur px-3 py-1.5 rounded-lg border text-base whitespace-nowrap flex items-center gap-2 transition-colors shadow-sm ${
                         seatedUser.id === userInRoom?.id 
                           ? 'bg-blue-600/20 dark:bg-blue-600/30 border-blue-500/50 text-blue-700 dark:text-blue-200 font-bold' 
                           : 'bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100'
