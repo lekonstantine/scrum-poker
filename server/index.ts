@@ -70,7 +70,9 @@ io.on('connection', (socket) => {
     }
 
     let seatIndex: number | null = null;
-    if (!userData.isObserver) {
+    const isAdmin = userData.name === 'Melody';
+    
+    if (!userData.isObserver && !isAdmin) {
       const availableSeats = Array.from({ length: MAX_SEATS }, (_, i) => i)
         .filter(seat => !users.some(u => u.seatIndex === seat));
 
@@ -86,7 +88,7 @@ io.on('connection', (socket) => {
       ...userData,
       seatIndex,
       vote: null,
-      isAdmin: userData.name === 'Melody', // Only Melody is admin
+      isAdmin,
       isObserver: !!userData.isObserver,
     };
 

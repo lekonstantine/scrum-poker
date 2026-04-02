@@ -67,7 +67,8 @@ const REACTIONS = [
   '👍', '❤️', '🔥', '👏', '🎉',
   '🤔', '👀', '😮', '🤯', '💯',
   '💀', '😭', '💅', '✨', '🗿',
-  '🤝', '🙌', '🤡', '✅', '❌'
+  '🤝', '🙌', '🤡', '✅', '❌',
+  '💨'
 ];
 
 const JiraLinkWithCopy = ({ 
@@ -396,6 +397,7 @@ export default function App() {
 
   const userInRoom = roomState.users.find(u => u.id === currentUser?.id) || currentUser;
   const observers = roomState.users.filter(u => u.isObserver);
+  const scrumMaster = roomState.users.find(u => u.isAdmin);
   const latestHistory = roomState.history[roomState.history.length - 1];
   const lastChatMessage = roomState.messages[roomState.messages.length - 1];
 
@@ -500,23 +502,51 @@ export default function App() {
           </div>
         </div>
 
-        {/* Observers List */}
-        {observers.length > 0 && (
-          <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700/50 shadow-sm backdrop-blur-md">
-            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mr-2">Observers</span>
-            <div className="flex -space-x-2">
-              {observers.map((obs) => (
-                <div 
-                  key={obs.id} 
-                  className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-900 flex items-center justify-center text-lg shadow-lg hover:scale-110 transition-transform cursor-help"
-                  title={`${obs.name} (Observer)`}
-                >
-                  {obs.avatar}
+        {/* Roles Panel: Scrum Master & Observers */}
+        <div className="flex items-center gap-3">
+          {scrumMaster && (
+            <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700/50 shadow-sm backdrop-blur-md relative">
+              {scrumMaster.reaction && (
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 text-3xl animate-bounce pointer-events-none z-[100] drop-shadow-xl">
+                  {scrumMaster.reaction}
                 </div>
-              ))}
+              )}
+              <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mr-1">Scrum Master</span>
+              <div 
+                className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border-2 border-yellow-400 flex items-center justify-center text-lg shadow-lg"
+                title={`${scrumMaster.name} (Scrum Master)`}
+              >
+                {scrumMaster.avatar}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {observers.length > 0 && (
+            <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-800/50 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700/50 shadow-sm backdrop-blur-md">
+              <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mr-2">Observers</span>
+              <div className="flex -space-x-2">
+                {observers.map((obs) => (
+                  <div 
+                    key={obs.id} 
+                    className="relative"
+                  >
+                    {obs.reaction && (
+                      <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 text-3xl animate-bounce pointer-events-none z-[100] drop-shadow-xl">
+                        {obs.reaction}
+                      </div>
+                    )}
+                    <div 
+                      className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-900 flex items-center justify-center text-lg shadow-lg hover:scale-110 transition-transform cursor-help"
+                      title={`${obs.name} (Observer)`}
+                    >
+                      {obs.avatar}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="flex gap-4">
           <button 
@@ -638,7 +668,7 @@ export default function App() {
       </main>
 
       {/* Floating Reactions Button */}
-      {!userInRoom?.isObserver && (
+      {userInRoom && (
         <div className="fixed right-8 top-28 flex flex-col items-end gap-2 z-40">
           <button
             onClick={() => setShowReactions(!showReactions)}
