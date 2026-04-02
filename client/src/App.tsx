@@ -15,7 +15,8 @@ import {
   X,
   Copy,
   Check,
-  Play
+  Play,
+  ChevronLeft
 } from 'lucide-react';
 
 // --- Types ---
@@ -480,6 +481,13 @@ export default function App() {
       {/* Header */}
       <header className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
+          <button 
+            onClick={handleLeave}
+            className="p-3 bg-white dark:bg-slate-800 rounded-xl hover:bg-red-50 dark:hover:bg-red-600/20 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-1 group/back"
+            title="Leave Room"
+          >
+            <ChevronLeft className="w-5 h-5 group-hover/back:-translate-x-0.5 transition-transform" />
+          </button>
           <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
             <span className="text-2xl">{userInRoom?.avatar}</span>
           </div>
@@ -524,13 +532,6 @@ export default function App() {
             title="History"
           >
             <History className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={handleLeave}
-            className="p-3 bg-white dark:bg-slate-800 rounded-xl hover:bg-red-50 dark:hover:bg-red-600/20 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
-            title="Leave Room"
-          >
-            <LogOut className="w-5 h-5" />
           </button>
         </div>
       </header>
