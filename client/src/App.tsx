@@ -160,7 +160,7 @@ export default function App() {
   };
 
   const handleChangeSeat = (seatIndex: number) => {
-    if (socket && !userInRoom.isObserver) {
+    if (socket && userInRoom && !userInRoom.isObserver) {
       socket.emit('change-seat', seatIndex);
     }
   };
