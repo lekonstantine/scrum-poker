@@ -58,6 +58,43 @@ const REACTIONS = [
   '🤝', '🙌', '🤡', '✅', '❌'
 ];
 
+const renderTitle = (title: string) => {
+  // Регулярное выражение для поиска CTG-XXXX или отдельно стоящих 3-4 цифр
+  const jiraRegex = /(CTG-\d{3,4}|\b\d{3,4}\b)/g;
+  const parts = title.split(jiraRegex);
+  return parts.map((part, i) => {
+    if (part.match(/^CTG-\d{3,4}$/)) {
+      return (
+        <a 
+          key={i} 
+          href={`https://cathaypacific-prod.atlassian.net/browse/${part}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 dark:text-blue-400 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    } else if (part.match(/^\d{3,4}$/)) {
+      const jiraId = `CTG-${part}`;
+      return (
+        <a 
+          key={i} 
+          href={`https://cathaypacific-prod.atlassian.net/browse/${jiraId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 dark:text-blue-400 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {jiraId}
+        </a>
+      );
+    }
+    return part;
+  });
+};
+
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
 
 export default function App() {
@@ -347,7 +384,7 @@ export default function App() {
               {roomState.currentTask ? (
                 <>
                   <h4 className="text-2xl font-bold mb-4 line-clamp-2 flex items-center justify-center gap-3 text-slate-800 dark:text-white">
-                    {roomState.currentTask.title}
+                    {renderTitle(roomState.currentTask.title)}
                     {roomState.isRevealed && (
                       <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-lg shadow-lg">
                         {latestHistory ? latestHistory.average : '0.0'}
@@ -492,7 +529,7 @@ export default function App() {
             ) : (
               <div className="flex gap-4 items-center">
                 <div className="px-4 py-2 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-500 dark:text-slate-400 max-w-xs truncate">
-                  Topic: <span className="text-slate-800 dark:text-white font-bold ml-1">{roomState.currentTask.title}</span>
+                  Topic: <span className="text-slate-800 dark:text-white font-bold ml-1">{renderTitle(roomState.currentTask.title)}</span>
                 </div>
                 <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2" />
                 <button 
@@ -571,7 +608,7 @@ export default function App() {
                   <div key={idx} className="bg-slate-50 dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
-                        <h4 className="font-bold text-slate-800 dark:text-white">{entry.task.title}</h4>
+                        <h4 className="font-bold text-slate-800 dark:text-white">{renderTitle(entry.task.title)}</h4>
                         <span className="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded text-xs font-bold border border-blue-200 dark:border-blue-500/30">
                           Avg: {entry.average}
                         </span>
