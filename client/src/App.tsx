@@ -180,6 +180,7 @@ export default function App() {
   const [jiraId, setJiraId] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
+  const [showChatReactions, setShowChatReactions] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
   const [typingUsers, setTypingUsers] = useState<{[key: string]: number}>({});
@@ -891,8 +892,36 @@ export default function App() {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 relative">
+              {showChatReactions && (
+                <div className="absolute bottom-full left-4 mb-2 grid grid-cols-5 gap-1 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xl animate-in slide-in-from-bottom-2 fade-in duration-200 z-50">
+                  {REACTIONS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => {
+                        if (socket) {
+                          socket.emit('message', emoji);
+                        }
+                        setShowChatReactions(false);
+                      }}
+                      className="w-8 h-8 flex items-center justify-center text-xl hover:scale-125 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-all"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="flex gap-2">
+                <button
+                  onClick={() => setShowChatReactions(!showChatReactions)}
+                  className={`p-2 rounded-xl transition-colors ${
+                    showChatReactions 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-500'
+                  }`}
+                >
+                  <Smile className="w-4 h-4" />
+                </button>
                 <input 
                   type="text" 
                   value={chatMessage}
