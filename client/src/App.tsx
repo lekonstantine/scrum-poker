@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { 
   History, 
@@ -129,6 +129,24 @@ export default function App() {
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
   const [typingUsers, setTypingUsers] = useState<{[key: string]: number}>({});
+  const chatRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (chatRef.current && !chatRef.current.contains(event.target as Node)) {
+        setShowChat(false);
+      }
+    }
+    if (showChat) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showChat]);
+
   const [scale, setScale] = useState(1);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
@@ -714,7 +732,7 @@ export default function App() {
       )}
 
       {/* Chat Component */}
-      <div className="fixed bottom-8 left-8 z-50 flex flex-col items-start gap-3">
+      <div ref={chatRef} className="fixed bottom-8 left-8 z-50 flex flex-col items-start gap-3">
         {showChat && (
           <div className="w-80 h-[450px] bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
             {/* Chat Header */}
