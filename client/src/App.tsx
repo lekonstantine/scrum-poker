@@ -454,11 +454,11 @@ export default function App() {
             );
           })}
         </div>
-        <div className="mt-12 flex gap-4 items-center">
+        <div className="mt-12 flex flex-col items-center gap-6">
           <button
             onClick={handleJoin}
             disabled={!selectedChar}
-            className="px-12 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xl font-bold rounded-full transition-colors shadow-lg shadow-blue-500/20"
+            className="px-16 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xl font-bold rounded-full transition-all shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95"
           >
             Enter Room
           </button>
@@ -472,7 +472,7 @@ export default function App() {
                 isObserver: true
               });
             }}
-            className="px-8 py-4 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xl font-bold rounded-full transition-colors border border-slate-200 dark:border-slate-700 shadow-md"
+            className="text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 font-medium transition-colors"
           >
             Join as Guest
           </button>
@@ -628,8 +628,8 @@ export default function App() {
                         (roomState.isRevealed ? revealedVote : seatedUser.vote)
                           ? (roomState.isRevealed 
                               ? 'bg-blue-600 border-blue-400 scale-110 shadow-lg shadow-blue-500/50 text-white' 
-                              : 'bg-indigo-600 dark:bg-indigo-900 border-indigo-400 dark:border-indigo-500 shadow-md rotate-3 text-white') 
-                          : 'bg-slate-100 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700/50 text-slate-300 dark:text-slate-700'
+                              : 'bg-indigo-700 dark:bg-slate-600 border-indigo-500 dark:border-slate-400 shadow-md rotate-3 text-white') 
+                          : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600'
                       }`}>
                         {roomState.isRevealed 
                           ? revealedVote 
