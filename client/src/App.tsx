@@ -488,15 +488,15 @@ export default function App() {
           >
             <ChevronLeft className="w-5 h-5 group-hover/back:-translate-x-0.5 transition-transform" />
           </button>
-          <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="flex items-center gap-3">
             <span className="text-2xl">{userInRoom?.avatar}</span>
-          </div>
-          <div>
-            <h2 className="font-bold flex items-center gap-2">
-              {userInRoom?.name} {userInRoom?.isAdmin && <Crown className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />}
-              {userInRoom?.isObserver && <span className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-500 dark:text-slate-400 ml-2">Observer</span>}
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{userInRoom?.title}</p>
+            <div className="flex flex-col">
+              <h2 className="font-bold flex items-center gap-2 text-lg leading-tight">
+                {userInRoom?.name} {userInRoom?.isAdmin && <Crown className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />}
+                {userInRoom?.isObserver && <span className="text-xs bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-500 dark:text-slate-400 ml-1">Observer</span>}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{userInRoom?.title}</p>
+            </div>
           </div>
         </div>
 
