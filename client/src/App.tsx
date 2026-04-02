@@ -60,6 +60,8 @@ const CHARACTERS = [
   { name: 'Fergal', title: 'API Developer', avatar: '☁️' },
   { name: 'Akash', title: 'Lead Developer', avatar: '🚀' },
   { name: 'Melody', title: 'Scrum Master', avatar: '📋' },
+  { name: 'Gillian', title: 'Designer', avatar: '🎨' },
+  { name: 'Adrian', title: 'Scrum Master', avatar: '📋' },
 ];
 
 const VOTE_VALUES = ['1', '2', '3', '5', '8'];

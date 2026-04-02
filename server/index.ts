@@ -70,7 +70,7 @@ io.on('connection', (socket) => {
     }
 
     let seatIndex: number | null = null;
-    const isAdmin = userData.name === 'Melody';
+    const isAdmin = userData.title === 'Scrum Master';
     
     if (!userData.isObserver && !isAdmin) {
       const availableSeats = Array.from({ length: MAX_SEATS }, (_, i) => i)
