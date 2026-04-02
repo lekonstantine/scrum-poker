@@ -863,12 +863,14 @@ export default function App() {
                       <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{msg.userName}</span>
                       <span className="text-[10px] text-slate-400">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-                    <div className={`px-3 py-2 rounded-2xl text-sm max-w-[90%] break-words shadow-sm ${
+                    <div className={`px-3 py-2 rounded-2xl max-w-[90%] break-words shadow-sm ${
+                      REACTIONS.includes(msg.text.trim()) ? 'text-3xl bg-transparent !border-0 !shadow-none' : 'text-sm'
+                    } ${
                       msg.userName === userInRoom?.name 
                         ? 'bg-blue-600 text-white rounded-tr-none' 
                         : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200 dark:border-slate-600'
                     }`}>
-                      {renderJiraLinks(
+                      {REACTIONS.includes(msg.text.trim()) ? msg.text : renderJiraLinks(
                         msg.text, 
                         msg.userName === userInRoom?.name ? "text-white underline" : undefined,
                         userInRoom?.isAdmin ? handleQuickSetTask : undefined
@@ -904,7 +906,7 @@ export default function App() {
                         }
                         setShowChatReactions(false);
                       }}
-                      className="w-8 h-8 flex items-center justify-center text-xl hover:scale-125 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-all"
+                      className="w-10 h-10 flex items-center justify-center text-2xl hover:scale-125 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-all"
                     >
                       {emoji}
                     </button>
