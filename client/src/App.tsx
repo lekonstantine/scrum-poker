@@ -10,7 +10,9 @@ import {
   LogOut,
   Sun,
   Moon,
-  Smile
+  Smile,
+  MessageSquare,
+  X
 } from 'lucide-react';
 
 // --- Types ---
@@ -36,6 +38,12 @@ interface HistoryEntry {
   task: Task;
   votes: { [userName: string]: string };
   average: number;
+  timestamp: number;
+}
+
+interface ChatMessage {
+  userName: string;
+  text: string;
   timestamp: number;
 }
 
@@ -107,15 +115,20 @@ export default function App() {
     currentTask: Task | null;
     isRevealed: boolean;
     history: HistoryEntry[];
+    messages: ChatMessage[];
   }>({
     users: [],
     currentTask: null,
     isRevealed: false,
     history: [],
+    messages: [],
   });
   const [jiraId, setJiraId] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessage, setChatMessage] = useState('');
+  const [typingUsers, setTypingUsers] = useState<{[key: string]: number}>({});
   const [scale, setScale] = useState(1);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
@@ -172,10 +185,50 @@ export default function App() {
       alert(msg);
     });
 
+    newSocket.on('user-typing', ({ userName }: { userName: string }) => {
+      setTypingUsers(prev => ({
+        ...prev,
+        [userName]: Date.now()
+      }));
+    });
+
     setSocket(newSocket);
     return () => {
       newSocket.close();
     };
+  }, []);
+
+  useEffect(() => {
+    // Clean up typing users who are no longer in the room
+    setTypingUsers(prev => {
+      const next = { ...prev };
+      let changed = false;
+      Object.keys(next).forEach(userName => {
+        if (!roomState.users.some(u => u.name === userName)) {
+          delete next[userName];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [roomState.users]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setTypingUsers(prev => {
+        const next = { ...prev };
+        let changed = false;
+        Object.keys(next).forEach(userName => {
+          if (now - next[userName] > 4000) {
+            delete next[userName];
+            changed = true;
+          }
+        });
+        return changed ? next : prev;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleJoin = () => {
@@ -234,6 +287,23 @@ export default function App() {
     }
   };
 
+  const handleSendMessage = () => {
+    if (socket && chatMessage.trim()) {
+      socket.emit('message', chatMessage.trim());
+      setChatMessage('');
+    }
+  };
+
+  const [lastTypingEmit, setLastTypingEmit] = useState(0);
+
+  const handleTyping = () => {
+    const now = Date.now();
+    if (socket && now - lastTypingEmit > 2000) {
+      socket.emit('typing');
+      setLastTypingEmit(now);
+    }
+  };
+
   const handleLeave = () => {
     if (socket) {
       socket.emit('leave');
@@ -244,6 +314,16 @@ export default function App() {
   const userInRoom = roomState.users.find(u => u.id === currentUser?.id) || currentUser;
   const observers = roomState.users.filter(u => u.isObserver);
   const latestHistory = roomState.history[roomState.history.length - 1];
+  const lastChatMessage = roomState.messages[roomState.messages.length - 1];
+
+  const getTypingText = () => {
+    const names = Object.keys(typingUsers);
+    if (names.length === 0) return null;
+    if (names.length === 1) return `${names[0]} is typing...`;
+    if (names.length === 2) return `${names[0]} and ${names[1]} are typing...`;
+    if (names.length === 3) return `${names[0]}, ${names[1]} and ${names[2]} are typing...`;
+    return 'Several people are typing...';
+  };
 
   if (!currentUser) {
     return (
@@ -632,6 +712,106 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Chat Component */}
+      <div className="fixed bottom-8 left-8 z-50 flex flex-col items-start gap-3">
+        {showChat && (
+          <div className="w-80 h-[450px] bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+            {/* Chat Header */}
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+              <h3 className="font-bold flex items-center gap-2 text-slate-800 dark:text-white">
+                <MessageSquare className="w-4 h-4 text-blue-500" /> Chat
+              </h3>
+              <button 
+                onClick={() => setShowChat(false)}
+                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {roomState.messages.length === 0 ? (
+                <p className="text-center text-slate-400 text-sm mt-10 italic">No messages yet. Say hi!</p>
+              ) : (
+                roomState.messages.map((msg, i) => (
+                  <div key={i} className={`flex flex-col ${msg.userName === userInRoom?.name ? 'items-end' : 'items-start'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{msg.userName}</span>
+                      <span className="text-[10px] text-slate-400">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div className={`px-3 py-2 rounded-2xl text-sm max-w-[90%] break-words shadow-sm ${
+                      msg.userName === userInRoom?.name 
+                        ? 'bg-blue-600 text-white rounded-tr-none' 
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200 dark:border-slate-600'
+                    }`}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))
+              )}
+              {getTypingText() && (
+                <div className="flex items-center gap-2 text-slate-400 italic text-xs animate-pulse ml-2 pb-2">
+                  <div className="flex gap-1">
+                    <div className="w-1 h-1 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-1 h-1 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-1 h-1 bg-slate-400 rounded-full animate-bounce"></div>
+                  </div>
+                  {getTypingText()}
+                </div>
+              )}
+              {/* Scroll anchor */}
+              <div ref={(el) => el?.scrollIntoView({ behavior: 'smooth' })} />
+            </div>
+
+            {/* Input Area */}
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={chatMessage}
+                  onChange={(e) => {
+                    setChatMessage(e.target.value);
+                    handleTyping();
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                  placeholder="Type a message..."
+                  className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 transition-colors text-slate-800 dark:text-white"
+                />
+                <button 
+                  onClick={handleSendMessage}
+                  disabled={!chatMessage.trim()}
+                  className="p-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!showChat && (
+          <button 
+            onClick={() => setShowChat(true)}
+            className="group flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl hover:scale-105 transition-all max-w-[280px]"
+          >
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+              <MessageSquare className="w-5 h-5" />
+            </div>
+            <div className="flex-1 text-left overflow-hidden">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-0.5">Chat</p>
+              <p className="text-sm text-slate-800 dark:text-slate-200 truncate font-medium">
+                {lastChatMessage ? (
+                  <>
+                    <span className="font-bold text-blue-500 dark:text-blue-400">{lastChatMessage.userName}:</span> {lastChatMessage.text}
+                  </>
+                ) : 'Click to open chat'}
+              </p>
+            </div>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

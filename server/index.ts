@@ -43,10 +43,17 @@ interface HistoryEntry {
   timestamp: number;
 }
 
+interface ChatMessage {
+  userName: string;
+  text: string;
+  timestamp: number;
+}
+
 let users: User[] = [];
 let currentTask: Task | null = null;
 let isRevealed = false;
 let history: HistoryEntry[] = [];
+let messages: ChatMessage[] = [];
 
 const MAX_SEATS = 12;
 
@@ -54,7 +61,7 @@ io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
   // Send initial state to the new connection
-  socket.emit('state-update', { users, currentTask, isRevealed, history });
+  socket.emit('state-update', { users, currentTask, isRevealed, history, messages });
 
   socket.on('join', (userData: { name: string; title: string; avatar: string; isObserver?: boolean }) => {
     if (users.some(u => u.name === userData.name)) {
@@ -84,15 +91,39 @@ io.on('connection', (socket) => {
     };
 
     users.push(newUser);
-    io.emit('state-update', { users, currentTask, isRevealed, history });
+    io.emit('state-update', { users, currentTask, isRevealed, history, messages });
     socket.emit('joined', newUser);
+  });
+
+  socket.on('message', (text: string) => {
+    const user = users.find(u => u.id === socket.id);
+    if (user && text.trim()) {
+      const newMessage: ChatMessage = {
+        userName: user.name,
+        text: text.trim(),
+        timestamp: Date.now(),
+      };
+      messages.push(newMessage);
+      // Keep only last 100 messages
+      if (messages.length > 100) {
+        messages = messages.slice(-100);
+      }
+      io.emit('state-update', { users, currentTask, isRevealed, history, messages });
+    }
+  });
+
+  socket.on('typing', () => {
+    const user = users.find(u => u.id === socket.id);
+    if (user) {
+      socket.broadcast.emit('user-typing', { userName: user.name });
+    }
   });
 
   socket.on('vote', (vote: string | null) => {
     const user = users.find(u => u.id === socket.id);
     if (user) {
       user.vote = vote;
-      io.emit('state-update', { users, currentTask, isRevealed, history });
+      io.emit('state-update', { users, currentTask, isRevealed, history, messages });
     }
   });
 
@@ -102,7 +133,7 @@ io.on('connection', (socket) => {
 
     if (user && !user.isObserver && !isOccupied && seatIndex >= 0 && seatIndex < MAX_SEATS) {
       user.seatIndex = seatIndex;
-      io.emit('state-update', { users, currentTask, isRevealed, history });
+      io.emit('state-update', { users, currentTask, isRevealed, history, messages });
     }
   });
 
@@ -110,14 +141,14 @@ io.on('connection', (socket) => {
     const user = users.find(u => u.id === socket.id);
     if (user) {
       user.reaction = emoji;
-      io.emit('state-update', { users, currentTask, isRevealed, history });
+      io.emit('state-update', { users, currentTask, isRevealed, history, messages });
 
       // Clear reaction after 3 seconds
       setTimeout(() => {
         const currentUser = users.find(u => u.id === socket.id);
         if (currentUser && currentUser.reaction === emoji) {
           currentUser.reaction = null;
-          io.emit('state-update', { users, currentTask, isRevealed, history });
+          io.emit('state-update', { users, currentTask, isRevealed, history, messages });
         }
       }, 5000);
     }
@@ -145,7 +176,7 @@ io.on('connection', (socket) => {
         history.push({ task: { ...currentTask }, votes, average, timestamp: Date.now() });
       }
       users.forEach(u => u.vote = null);
-      io.emit('state-update', { users, currentTask, isRevealed, history });
+      io.emit('state-update', { users, currentTask, isRevealed, history, messages });
     }
   });
 
@@ -155,7 +186,7 @@ io.on('connection', (socket) => {
       isRevealed = false;
       currentTask = null;
       users.forEach(u => u.vote = null);
-      io.emit('state-update', { users, currentTask, isRevealed });
+      io.emit('state-update', { users, currentTask, isRevealed, history, messages });
     }
   });
 
@@ -166,7 +197,7 @@ io.on('connection', (socket) => {
       currentTask = task;
       isRevealed = false;
       users.forEach(u => u.vote = null);
-      io.emit('state-update', { users, currentTask, isRevealed });
+      io.emit('state-update', { users, currentTask, isRevealed, history, messages });
     }
   });
 
@@ -177,19 +208,19 @@ io.on('connection', (socket) => {
       if (userToRemove) {
         users = users.filter(u => u.id !== userId);
         io.to(userId).emit('removed');
-        io.emit('state-update', { users, currentTask, isRevealed });
+        io.emit('state-update', { users, currentTask, isRevealed, history, messages });
       }
     }
   });
 
   socket.on('leave', () => {
     users = users.filter(u => u.id !== socket.id);
-    io.emit('state-update', { users, currentTask, isRevealed });
+    io.emit('state-update', { users, currentTask, isRevealed, history, messages });
   });
 
   socket.on('disconnect', () => {
     users = users.filter(u => u.id !== socket.id);
-    io.emit('state-update', { users, currentTask, isRevealed });
+    io.emit('state-update', { users, currentTask, isRevealed, history, messages });
   });
 });
 
