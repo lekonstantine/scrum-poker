@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { 
-  History, 
-  Send, 
-  CheckCircle2, 
+import {
+  History,
+  Send,
+  CheckCircle2,
   XCircle,
   User as UserIcon,
   Crown,
@@ -73,16 +73,16 @@ const REACTIONS = [
   '💨'
 ];
 
-const JiraLinkWithCopy = ({ 
-  jiraId, 
-  originalText, 
-  className, 
-  onSetTask 
-}: { 
-  jiraId: string, 
-  originalText: string, 
-  className?: string, 
-  onSetTask?: (id: string) => void 
+const JiraLinkWithCopy = ({
+  jiraId,
+  originalText,
+  className,
+  onSetTask
+}: {
+  jiraId: string,
+  originalText: string,
+  className?: string,
+  onSetTask?: (id: string) => void
 }) => {
   const [copied, setCopied] = useState(false);
   const fullUrl = `https://cathaypacific-prod.atlassian.net/browse/${jiraId}`;
@@ -98,7 +98,7 @@ const JiraLinkWithCopy = ({
 
   return (
     <span className="inline-flex items-center gap-1 group/jira">
-      <a 
+      <a
         href={fullUrl}
         target="_blank"
         rel="noopener noreferrer"
@@ -110,11 +110,10 @@ const JiraLinkWithCopy = ({
       <div className="flex items-center gap-0.5">
         <button
           onClick={handleCopy}
-          className={`p-0.5 rounded transition-colors ${
-            copied 
-              ? 'text-green-500 bg-green-50 dark:bg-green-900/20' 
+          className={`p-0.5 rounded transition-colors ${copied
+              ? 'text-green-500 bg-green-50 dark:bg-green-900/20'
               : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
-          }`}
+            }`}
           title="Copy full URL"
         >
           {copied ? <Check size={12} /> : <Copy size={12} />}
@@ -149,8 +148,8 @@ const renderJiraLinks = (text: string, linkClassName?: string, onSetTask?: (id: 
       // we should keep the white color but keep the weight
       const isOwnMessage = linkClassName?.includes('text-white');
       return (
-        <strong 
-          key={i} 
+        <strong
+          key={i}
           className={`font-bold ${isOwnMessage ? 'text-white underline decoration-2' : 'text-blue-600 dark:text-blue-400'}`}
         >
           {name}
@@ -164,11 +163,11 @@ const renderJiraLinks = (text: string, linkClassName?: string, onSetTask?: (id: 
       const digits = fullUrlMatch[2];
       const jiraId = `CTG-${digits}`;
       return (
-        <JiraLinkWithCopy 
-          key={i} 
-          jiraId={jiraId} 
-          originalText={part} 
-          className={linkClassName} 
+        <JiraLinkWithCopy
+          key={i}
+          jiraId={jiraId}
+          originalText={part}
+          className={linkClassName}
           onSetTask={onSetTask}
         />
       );
@@ -179,11 +178,11 @@ const renderJiraLinks = (text: string, linkClassName?: string, onSetTask?: (id: 
       const digits = match[2];
       const jiraId = `CTG-${digits}`;
       return (
-        <JiraLinkWithCopy 
-          key={i} 
-          jiraId={jiraId} 
-          originalText={part} 
-          className={linkClassName} 
+        <JiraLinkWithCopy
+          key={i}
+          jiraId={jiraId}
+          originalText={part}
+          className={linkClassName}
           onSetTask={onSetTask}
         />
       );
@@ -194,11 +193,11 @@ const renderJiraLinks = (text: string, linkClassName?: string, onSetTask?: (id: 
     if (standaloneMatch) {
       const jiraId = `CTG-${standaloneMatch[1]}`;
       return (
-        <JiraLinkWithCopy 
-          key={i} 
-          jiraId={jiraId} 
-          originalText={part} 
-          className={linkClassName} 
+        <JiraLinkWithCopy
+          key={i}
+          jiraId={jiraId}
+          originalText={part}
+          className={linkClassName}
           onSetTask={onSetTask}
         />
       );
@@ -237,7 +236,7 @@ export default function App() {
   const [mentionSearch, setMentionSearch] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionIndex, setMentionIndex] = useState(0);
-  const [typingUsers, setTypingUsers] = useState<{[key: string]: number}>({});
+  const [typingUsers, setTypingUsers] = useState<{ [key: string]: number }>({});
   const chatRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -277,10 +276,10 @@ export default function App() {
 
   useEffect(() => {
     const handleResize = () => {
-      const minWidth = 1100; // Desired width for full table layout
-      const minHeight = 800; // Desired height for full table layout
+      const minWidth = 1000; // Desired width for full table layout
+      const minHeight = 700; // Desired height for full table layout
       const scaleX = window.innerWidth / minWidth;
-      const scaleY = (window.innerHeight - 300) / (minHeight - 300); // 300 for UI overhead
+      const scaleY = (window.innerHeight - 250) / (minHeight - 250); // 250 for UI overhead
       setScale(Math.min(1, scaleX, scaleY));
     };
 
@@ -295,7 +294,7 @@ export default function App() {
       path: '/socket.io',
       transports: ['websocket', 'polling']
     });
-    
+
     newSocket.on('state-update', (state) => {
       setRoomState(prev => ({ ...prev, ...state }));
     });
@@ -481,7 +480,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center p-8 transition-colors duration-300 ${theme} ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'}`}>
-        <button 
+        <button
           onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
           className="fixed top-8 right-8 p-3 rounded-full bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:scale-110 transition-transform z-50"
         >
@@ -502,13 +501,12 @@ export default function App() {
                   }
                 }}
                 disabled={isTaken}
-                className={`p-6 rounded-2xl border-4 transition-all flex flex-col items-center gap-3 ${
-                  selectedChar?.name === char.name 
-                  ? 'border-blue-500 bg-blue-500/10 scale-105 shadow-xl shadow-blue-500/20' 
-                  : isTaken 
-                    ? 'border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 opacity-40 grayscale cursor-not-allowed'
-                    : 'border-white dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-500 shadow-md'
-                }`}
+                className={`p-6 rounded-2xl border-4 transition-all flex flex-col items-center gap-3 ${selectedChar?.name === char.name
+                    ? 'border-blue-500 bg-blue-500/10 scale-105 shadow-xl shadow-blue-500/20'
+                    : isTaken
+                      ? 'border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 opacity-40 grayscale cursor-not-allowed'
+                      : 'border-white dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-500 shadow-md'
+                  }`}
               >
                 <span className="text-5xl">{char.avatar}</span>
                 <div className="text-center">
@@ -547,11 +545,11 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen p-6 overflow-hidden flex flex-col transition-colors duration-300 ${theme} ${theme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
+    <div className={`h-screen p-6 overflow-hidden flex flex-col transition-colors duration-300 ${theme} ${theme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
       {/* Header */}
-      <header className="flex justify-between items-center mb-8">
+      <header className="flex-shrink-0 flex justify-between items-center mb-12">
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={handleLeave}
             className="p-3 bg-white dark:bg-slate-800 rounded-xl hover:bg-red-50 dark:hover:bg-red-600/20 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-1 group/back"
             title="Leave Room"
@@ -599,8 +597,8 @@ export default function App() {
               <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mr-2">Observers</span>
               <div className="flex -space-x-2">
                 {observers.map((obs) => (
-                  <div 
-                    key={obs.id} 
+                  <div
+                    key={obs.id}
                     className="relative"
                   >
                     {obs.reaction && (
@@ -608,7 +606,7 @@ export default function App() {
                         {obs.reaction}
                       </div>
                     )}
-                    <div 
+                    <div
                       className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-900 flex items-center justify-center text-lg shadow-lg hover:scale-110 transition-transform cursor-help"
                       title={`${obs.name} (Observer)`}
                     >
@@ -622,14 +620,14 @@ export default function App() {
         </div>
 
         <div className="flex gap-4">
-          <button 
+          <button
             onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
             className="p-3 bg-white dark:bg-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-white shadow-sm"
             title="Toggle Theme"
           >
             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
-          <button 
+          <button
             onClick={() => setShowHistory(true)}
             className="p-3 bg-white dark:bg-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-white shadow-sm"
             title="History"
@@ -639,103 +637,105 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center relative">
-        <div 
-          className="transition-transform duration-300 flex items-center justify-center z-10"
-          style={{ transform: `scale(${scale})` }}
+      <main className="flex-1 flex flex-col items-center justify-center relative min-h-0">
+        <div
+          className="flex items-center justify-center -translate-y-[10%]"
+          style={{ height: `${325 * scale}px`, width: `${650 * scale}px` }}
         >
-          {/* The Table */}
-          <div className="w-[800px] h-[400px] bg-white dark:bg-slate-800 rounded-[200px] border-[12px] border-slate-100 dark:border-slate-700 shadow-2xl relative flex items-center justify-center transition-colors">
-            <div className="text-center max-w-md p-8">
-              {roomState.currentTask ? (
-                <>
-                  <h4 className="text-2xl font-bold mb-4 line-clamp-2 flex items-center justify-center gap-3 text-slate-800 dark:text-white">
-                    {renderJiraLinks(roomState.currentTask.title)}
-                    {roomState.isRevealed && (
-                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-lg shadow-lg">
-                        {latestHistory ? latestHistory.average : '0.0'}
-                      </span>
-                    )}
-                  </h4>
-                </>
-              ) : (
-                <p className="text-slate-400 dark:text-slate-500 text-xl italic font-medium">Waiting for Admin to start...</p>
-              )}
-            </div>
-
-            {/* Seats */}
-            {[...Array(10)].map((_, i) => {
-              const angle = (i * 36) * (Math.PI / 180);
-              const x = Math.cos(angle) * 440;
-              const y = Math.sin(angle) * 240;
-              const seatedUser = roomState.users.find(u => u.seatIndex === i);
-              const revealedVote = roomState.isRevealed && latestHistory ? latestHistory.votes[seatedUser?.name || ''] : null;
-
-              // When the whole table scales down, we keep users a bit larger
-              // this ensures names and cards remain readable
-              const uiScale = scale < 0.8 ? 0.8 / scale : 1;
-
-              return (
-                <div 
-                  key={i}
-                  className="absolute transition-all duration-500"
-                  style={{ transform: `translate(${x}px, ${y}px) scale(${uiScale})` }}
-                >
-                  {seatedUser ? (
-                    <div className="flex flex-col items-center gap-2 relative">
-                      {/* Reaction Overlay */}
-                      {seatedUser.reaction && (
-                        <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-5xl animate-bounce pointer-events-none z-[100] drop-shadow-2xl">
-                          {seatedUser.reaction}
-                        </div>
+          <div
+            className="transition-transform duration-300 flex items-center justify-center z-10 shrink-0"
+            style={{ transform: `scale(${scale})`, width: '650px', height: '325px' }}
+          >
+            {/* The Table */}
+            <div className="w-[650px] h-[325px] bg-white dark:bg-slate-800 rounded-[200px] border-[12px] border-slate-100 dark:border-slate-700 shadow-2xl relative flex items-center justify-center transition-colors">
+              <div className="text-center max-w-md p-8">
+                {roomState.currentTask ? (
+                  <>
+                    <h4 className="text-2xl font-bold mb-4 line-clamp-2 flex items-center justify-center gap-3 text-slate-800 dark:text-white">
+                      {renderJiraLinks(roomState.currentTask.title)}
+                      {roomState.isRevealed && (
+                        <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-lg shadow-lg">
+                          {latestHistory ? latestHistory.average : '0.0'}
+                        </span>
                       )}
-                      <div className={`w-16 h-24 rounded-lg border-2 flex items-center justify-center text-2xl font-bold transition-all duration-500 ${
-                        (roomState.isRevealed ? revealedVote : seatedUser.vote)
-                          ? (roomState.isRevealed 
-                              ? 'bg-blue-600 border-blue-400 scale-110 shadow-lg shadow-blue-500/50 text-white' 
-                              : 'bg-indigo-700 dark:bg-slate-600 border-indigo-500 dark:border-slate-400 shadow-md rotate-3 text-white') 
-                          : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600'
-                      }`}>
-                        {roomState.isRevealed 
-                          ? revealedVote 
-                          : (seatedUser.vote ? (
+                    </h4>
+                  </>
+                ) : (
+                  <p className="text-slate-400 dark:text-slate-500 text-xl italic font-medium">Waiting for Admin to start...</p>
+                )}
+              </div>
+
+              {/* Seats */}
+              {[...Array(10)].map((_, i) => {
+                const angle = (i * 36) * (Math.PI / 180);
+                const x = Math.cos(angle) * 360;
+                const y = Math.sin(angle) * 200;
+                const seatedUser = roomState.users.find(u => u.seatIndex === i);
+                const revealedVote = roomState.isRevealed && latestHistory ? latestHistory.votes[seatedUser?.name || ''] : null;
+
+                // When the whole table scales down, we keep users a bit larger
+                // this ensures names and cards remain readable
+                const uiScale = scale < 0.8 ? 0.8 / scale : 1;
+
+                return (
+                  <div
+                    key={i}
+                    className="absolute transition-all duration-500"
+                    style={{ transform: `translate(${x}px, ${y}px) scale(${uiScale})` }}
+                  >
+                    {seatedUser ? (
+                      <div className="flex flex-col items-center gap-2 relative">
+                        {/* Reaction Overlay */}
+                        {seatedUser.reaction && (
+                          <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-5xl animate-bounce pointer-events-none z-[100] drop-shadow-2xl">
+                            {seatedUser.reaction}
+                          </div>
+                        )}
+                        <div className={`w-16 h-24 rounded-lg border-2 flex items-center justify-center text-2xl font-bold transition-all duration-500 ${(roomState.isRevealed ? revealedVote : seatedUser.vote)
+                            ? (roomState.isRevealed
+                              ? 'bg-blue-600 border-blue-400 scale-110 shadow-lg shadow-blue-500/50 text-white'
+                              : 'bg-indigo-700 dark:bg-slate-600 border-indigo-500 dark:border-slate-400 shadow-md rotate-3 text-white')
+                            : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600'
+                          }`}>
+                          {roomState.isRevealed
+                            ? revealedVote
+                            : (seatedUser.vote ? (
                               <div className="w-full h-full flex items-center justify-center opacity-40">
                                 <Crown className="w-8 h-8 rotate-12" />
                               </div>
                             ) : '')
-                        }
+                          }
+                        </div>
+                        <div className={`backdrop-blur px-3 py-1.5 rounded-lg border text-base whitespace-nowrap flex items-center gap-2 transition-colors shadow-sm ${seatedUser.id === userInRoom?.id
+                            ? 'bg-blue-600/20 dark:bg-blue-600/30 border-blue-500/50 text-blue-700 dark:text-blue-200 font-bold'
+                            : 'bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100'
+                          }`}>
+                          <span>{seatedUser.name}</span>
+                          {userInRoom?.isAdmin && seatedUser.id !== userInRoom.id && (
+                            <button
+                              onClick={() => handleRemoveUser(seatedUser.id)}
+                              className="text-slate-400 hover:text-red-500 transition-colors"
+                              title="Remove user"
+                            >
+                              <XCircle className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className={`backdrop-blur px-3 py-1.5 rounded-lg border text-base whitespace-nowrap flex items-center gap-2 transition-colors shadow-sm ${
-                        seatedUser.id === userInRoom?.id 
-                          ? 'bg-blue-600/20 dark:bg-blue-600/30 border-blue-500/50 text-blue-700 dark:text-blue-200 font-bold' 
-                          : 'bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100'
-                      }`}>
-                        <span>{seatedUser.name}</span>
-                        {userInRoom?.isAdmin && seatedUser.id !== userInRoom.id && (
-                          <button
-                            onClick={() => handleRemoveUser(seatedUser.id)}
-                            className="text-slate-400 hover:text-red-500 transition-colors"
-                            title="Remove user"
-                          >
-                            <XCircle className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={() => !userInRoom?.isObserver && !userInRoom?.isAdmin && handleChangeSeat(i)}
-                      disabled={userInRoom?.isObserver || userInRoom?.isAdmin}
-                      className={`w-12 h-12 rounded-full border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-300 dark:text-slate-700 transition-colors group ${
-                        userInRoom?.isObserver || userInRoom?.isAdmin ? 'cursor-not-allowed opacity-40' : 'hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-400 dark:hover:text-slate-500 bg-white/50 dark:bg-transparent'
-                      }`}
-                    >
-                      <UserIcon className={`w-6 h-6 ${(!userInRoom?.isObserver && !userInRoom?.isAdmin) ? 'group-hover:scale-110' : 'opacity-20'} transition-transform`} />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+                    ) : (
+                      <button
+                        onClick={() => !userInRoom?.isObserver && !userInRoom?.isAdmin && handleChangeSeat(i)}
+                        disabled={userInRoom?.isObserver || userInRoom?.isAdmin}
+                        className={`w-12 h-12 rounded-full border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-300 dark:text-slate-700 transition-colors group ${userInRoom?.isObserver || userInRoom?.isAdmin ? 'cursor-not-allowed opacity-40' : 'hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-400 dark:hover:text-slate-500 bg-white/50 dark:bg-transparent'
+                          }`}
+                      >
+                        <UserIcon className={`w-6 h-6 ${(!userInRoom?.isObserver && !userInRoom?.isAdmin) ? 'group-hover:scale-110' : 'opacity-20'} transition-transform`} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </main>
@@ -745,11 +745,10 @@ export default function App() {
         <div className="fixed right-8 top-28 flex flex-col items-end gap-2 z-40">
           <button
             onClick={() => setShowReactions(!showReactions)}
-            className={`p-3 rounded-full shadow-lg border transition-all hover:scale-110 ${
-              showReactions 
-                ? 'bg-blue-600 border-blue-500 text-white' 
+            className={`p-3 rounded-full shadow-lg border transition-all hover:scale-110 ${showReactions
+                ? 'bg-blue-600 border-blue-500 text-white'
                 : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-500 dark:hover:text-white shadow-sm'
-            }`}
+              }`}
             title="Reactions"
           >
             <Smile size={24} />
@@ -774,22 +773,22 @@ export default function App() {
       )}
 
       {/* Controls Area */}
-      <footer className="mt-auto pb-10 flex flex-col items-center gap-6">
+      <footer className="fixed bottom-6 left-0 right-0 flex flex-col items-center gap-2 z-40 pointer-events-none">
         {/* Admin Panel */}
-        <div className="h-[80px] flex items-center justify-center">
-          {userInRoom?.isAdmin && (
+        {userInRoom?.isAdmin && (
+          <div className="h-[80px] flex items-center justify-center pointer-events-auto">
             <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex gap-4 items-center animate-in fade-in zoom-in duration-300">
               {!roomState.currentTask ? (
                 <div className="flex bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-1">
-                  <input 
-                    type="text" 
-                    placeholder="Enter Task or Jira ID..." 
+                  <input
+                    type="text"
+                    placeholder="Enter Task or Jira ID..."
                     value={jiraId}
                     onChange={(e) => setJiraId(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSetTask()}
                     className="bg-transparent px-4 py-2 outline-none w-64 text-sm text-slate-800 dark:text-white placeholder-slate-400"
                   />
-                  <button 
+                  <button
                     onClick={handleSetTask}
                     disabled={!jiraId.trim()}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2 font-bold text-sm"
@@ -803,14 +802,14 @@ export default function App() {
                     Topic: <span className="text-slate-800 dark:text-white font-bold ml-1">{renderJiraLinks(roomState.currentTask.title)}</span>
                   </div>
                   <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2" />
-                  <button 
+                  <button
                     onClick={handleReveal}
                     disabled={roomState.isRevealed}
                     className="px-6 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold flex items-center gap-2 transition-colors shadow-lg shadow-green-500/20"
                   >
                     <CheckCircle2 className="w-5 h-5" /> Reveal
                   </button>
-                  <button 
+                  <button
                     onClick={handleReset}
                     className="px-6 py-2 bg-red-100 dark:bg-red-600/20 hover:bg-red-200 dark:hover:bg-red-600/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-600/50 rounded-xl font-bold flex items-center gap-2 transition-colors"
                   >
@@ -819,22 +818,21 @@ export default function App() {
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {!userInRoom?.isAdmin && !userInRoom?.isObserver && (
-          <div className="flex flex-col items-center justify-center h-[140px] w-full px-4">
+          <div className="flex flex-col items-center justify-center w-full px-4 min-h-[100px]">
             {roomState.currentTask ? (
-              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pointer-events-auto">
                 {VOTE_VALUES.map((val) => (
                   <button
                     key={val}
                     onClick={() => handleVote(userInRoom?.vote === val ? null : val)}
-                    className={`w-14 h-20 sm:w-16 sm:h-24 rounded-xl border-2 font-bold text-xl sm:text-2xl transition-all hover:-translate-y-2 ${
-                      userInRoom?.vote === val 
-                      ? 'bg-blue-600 border-blue-400 -translate-y-4 shadow-xl shadow-blue-500/50 text-white' 
-                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-blue-300 dark:hover:border-slate-500 shadow-md'
-                    }`}
+                    className={`w-14 h-20 sm:w-16 sm:h-24 rounded-xl border-2 font-bold text-xl sm:text-2xl transition-all hover:-translate-y-2 ${userInRoom?.vote === val
+                        ? 'bg-blue-600 border-blue-400 -translate-y-4 shadow-xl shadow-blue-500/50 text-white'
+                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-blue-300 dark:hover:border-slate-500 shadow-md'
+                      }`}
                   >
                     {val}
                   </button>
@@ -848,8 +846,8 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <div className="bg-white/50 dark:bg-slate-800/50 px-8 py-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500 italic flex items-center gap-3">
-                <Smile className="w-5 h-5 opacity-50 text-blue-500" />
+              <div className="text-slate-400 dark:text-slate-500 italic flex items-center gap-2 text-sm opacity-80 pointer-events-auto">
+                <Smile className="w-4 h-4 text-blue-500/50" />
                 Wait for the Scrum Master to start voting...
               </div>
             )}
@@ -864,7 +862,7 @@ export default function App() {
               <h2 className="text-2xl font-bold flex items-center gap-3 text-slate-800 dark:text-white">
                 <History className="text-blue-500 dark:text-blue-400" /> Voting History
               </h2>
-              <button 
+              <button
                 onClick={() => setShowHistory(false)}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400"
               >
@@ -910,17 +908,16 @@ export default function App() {
       {/* Chat Component */}
       <div ref={chatRef} className="fixed bottom-8 left-8 z-50 flex flex-col items-start gap-3">
         {showChat && (
-          <div className={`w-80 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300 ${
-            roomState.messages.length > 4 
-              ? 'h-fit min-h-[450px] max-h-[calc(100vh-160px)]' 
+          <div className={`w-80 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300 ${roomState.messages.length > 4
+              ? 'h-fit min-h-[450px] max-h-[calc(100vh-160px)]'
               : 'h-[450px]'
-          }`}>
+            }`}>
             {/* Chat Header */}
             <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
               <h3 className="font-bold flex items-center gap-2 text-slate-800 dark:text-white">
                 <MessageSquare className="w-4 h-4 text-blue-500" /> Chat
               </h3>
-              <button 
+              <button
                 onClick={() => setShowChat(false)}
                 className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400 transition-colors"
               >
@@ -939,15 +936,13 @@ export default function App() {
                       <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{msg.userName}</span>
                       <span className="text-[10px] text-slate-400">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-                    <div className={`px-3 py-2 rounded-2xl max-w-[90%] break-words shadow-sm ${
-                      REACTIONS.includes(msg.text.trim()) ? 'text-3xl bg-transparent !border-0 !shadow-none' : 'text-sm'
-                    } ${
-                      msg.userName === userInRoom?.name 
-                        ? 'bg-blue-600 text-white rounded-tr-none' 
+                    <div className={`px-3 py-2 rounded-2xl max-w-[90%] break-words shadow-sm ${REACTIONS.includes(msg.text.trim()) ? 'text-3xl bg-transparent !border-0 !shadow-none' : 'text-sm'
+                      } ${msg.userName === userInRoom?.name
+                        ? 'bg-blue-600 text-white rounded-tr-none'
                         : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200 dark:border-slate-600'
-                    }`}>
+                      }`}>
                       {REACTIONS.includes(msg.text.trim()) ? msg.text : renderJiraLinks(
-                        msg.text, 
+                        msg.text,
                         msg.userName === userInRoom?.name ? "text-white underline" : undefined,
                         userInRoom?.isAdmin ? handleQuickSetTask : undefined
                       )}
@@ -984,11 +979,10 @@ export default function App() {
                           key={user.id}
                           onClick={() => handleSelectMention(user.name)}
                           onMouseEnter={() => setMentionIndex(idx)}
-                          className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-                            idx === mentionIndex 
-                              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${idx === mentionIndex
+                              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                               : 'hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
-                          }`}
+                            }`}
                         >
                           <span className="text-lg">{user.avatar}</span>
                           <div className="flex-1 overflow-hidden">
@@ -1026,16 +1020,15 @@ export default function App() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowChatReactions(!showChatReactions)}
-                  className={`p-2 rounded-xl transition-colors ${
-                    showChatReactions 
-                      ? 'bg-blue-600 text-white' 
+                  className={`p-2 rounded-xl transition-colors ${showChatReactions
+                      ? 'bg-blue-600 text-white'
                       : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-500'
-                  }`}
+                    }`}
                 >
                   <Smile className="w-4 h-4" />
                 </button>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={chatMessage}
                   onChange={(e) => {
                     const newValue = e.target.value;
@@ -1059,10 +1052,10 @@ export default function App() {
                   }}
                   onKeyDown={(e) => {
                     if (showMentions) {
-                      const filteredUsers = roomState.users.filter(u => 
+                      const filteredUsers = roomState.users.filter(u =>
                         u.name.toLowerCase().startsWith(mentionSearch.toLowerCase())
                       );
-                      
+
                       if (e.key === 'ArrowDown') {
                         e.preventDefault();
                         setMentionIndex(prev => (prev + 1) % filteredUsers.length);
@@ -1084,7 +1077,7 @@ export default function App() {
                   placeholder="Type a message..."
                   className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 transition-colors text-slate-800 dark:text-white"
                 />
-                <button 
+                <button
                   onClick={handleSendMessage}
                   disabled={!chatMessage.trim()}
                   className="p-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl transition-colors"
@@ -1097,7 +1090,7 @@ export default function App() {
         )}
 
         {!showChat && (
-          <button 
+          <button
             onClick={() => setShowChat(true)}
             className="group flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl hover:scale-105 transition-all max-w-[280px]"
           >
