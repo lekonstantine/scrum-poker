@@ -137,11 +137,44 @@ const JiraLinkWithCopy = ({
 };
 
 const renderJiraLinks = (text: string, linkClassName?: string, onSetTask?: (id: string) => void) => {
-  // Regex for CTG-XXXX, CTGXXXX or standalone 3-4 digits
-  const jiraRegex = /(CTG-?\d{3,4}|\b\d{3,4}\b)/g;
+  // Regex for full Atlassian URL, CTG-XXXX, CTGXXXX, standalone 3-4 digits, OR **Bold Name**
+  // We use \d+ for CTG- prefixed IDs to support any length
+  const jiraRegex = /(https:\/\/cathaypacific-prod\.atlassian\.net\/browse\/CTG-?\d+|CTG-?\d{3,10}|\b\d{3,4}\b|\*\*[^*]+\*\*)/g;
   const parts = text.split(jiraRegex);
   return parts.map((part, i) => {
-    const match = part.match(/^(CTG-?)?(\d{3,4})$/);
+    // Check if it's a bold mention
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const name = part.slice(2, -2);
+      // If we're inside a colored link (like white for own messages), 
+      // we should keep the white color but keep the weight
+      const isOwnMessage = linkClassName?.includes('text-white');
+      return (
+        <strong 
+          key={i} 
+          className={`font-bold ${isOwnMessage ? 'text-white underline decoration-2' : 'text-blue-600 dark:text-blue-400'}`}
+        >
+          {name}
+        </strong>
+      );
+    }
+
+    // Check if it's a full URL first
+    const fullUrlMatch = part.match(/https:\/\/cathaypacific-prod\.atlassian\.net\/browse\/(CTG-?)?(\d+)/);
+    if (fullUrlMatch) {
+      const digits = fullUrlMatch[2];
+      const jiraId = `CTG-${digits}`;
+      return (
+        <JiraLinkWithCopy 
+          key={i} 
+          jiraId={jiraId} 
+          originalText={part} 
+          className={linkClassName} 
+          onSetTask={onSetTask}
+        />
+      );
+    }
+
+    const match = part.match(/^(CTG-?)?(\d{3,10})$/);
     if (match) {
       const digits = match[2];
       const jiraId = `CTG-${digits}`;
@@ -155,6 +188,22 @@ const renderJiraLinks = (text: string, linkClassName?: string, onSetTask?: (id: 
         />
       );
     }
+
+    // Handle standalone digits
+    const standaloneMatch = part.match(/^(\d{3,4})$/);
+    if (standaloneMatch) {
+      const jiraId = `CTG-${standaloneMatch[1]}`;
+      return (
+        <JiraLinkWithCopy 
+          key={i} 
+          jiraId={jiraId} 
+          originalText={part} 
+          className={linkClassName} 
+          onSetTask={onSetTask}
+        />
+      );
+    }
+
     return part;
   });
 };
@@ -185,6 +234,9 @@ export default function App() {
   const [showChatReactions, setShowChatReactions] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionIndex, setMentionIndex] = useState(0);
   const [typingUsers, setTypingUsers] = useState<{[key: string]: number}>({});
   const chatRef = useRef<HTMLDivElement>(null);
 
@@ -366,6 +418,19 @@ export default function App() {
     if (socket && chatMessage.trim()) {
       socket.emit('message', chatMessage.trim());
       setChatMessage('');
+      setShowMentions(false);
+      setMentionSearch('');
+    }
+  };
+
+  const handleSelectMention = (userName: string) => {
+    const lastAtIndex = chatMessage.lastIndexOf('@');
+    if (lastAtIndex !== -1) {
+      const beforeAt = chatMessage.slice(0, lastAtIndex);
+      const afterMention = chatMessage.slice(lastAtIndex + 1 + mentionSearch.length);
+      setChatMessage(`${beforeAt}**${userName}** ${afterMention}`);
+      setShowMentions(false);
+      setMentionSearch('');
     }
   };
 
@@ -902,6 +967,40 @@ export default function App() {
 
             {/* Input Area */}
             <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 relative">
+              {showMentions && (
+                <div className="absolute bottom-full left-4 right-4 mb-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden z-50 animate-in slide-in-from-bottom-2 duration-200">
+                  <div className="p-2 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Mention Participant
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {roomState.users
+                      .filter(u => u.name.toLowerCase().startsWith(mentionSearch.toLowerCase()))
+                      .map((user, idx, filtered) => (
+                        <button
+                          key={user.id}
+                          onClick={() => handleSelectMention(user.name)}
+                          onMouseEnter={() => setMentionIndex(idx)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                            idx === mentionIndex 
+                              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                              : 'hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          <span className="text-lg">{user.avatar}</span>
+                          <div className="flex-1 overflow-hidden">
+                            <p className="text-sm font-bold truncate">{user.name}</p>
+                            <p className="text-[10px] text-slate-400 truncate">{user.title}</p>
+                          </div>
+                        </button>
+                      ))}
+                    {roomState.users.filter(u => u.name.toLowerCase().startsWith(mentionSearch.toLowerCase())).length === 0 && (
+                      <div className="p-4 text-center text-sm text-slate-400 italic">
+                        No participants found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               {showChatReactions && (
                 <div className="absolute bottom-full left-4 mb-2 grid grid-cols-5 gap-1 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xl animate-in slide-in-from-bottom-2 fade-in duration-200 z-50">
                   {REACTIONS.map((emoji) => (
@@ -935,10 +1034,49 @@ export default function App() {
                   type="text" 
                   value={chatMessage}
                   onChange={(e) => {
-                    setChatMessage(e.target.value);
+                    const newValue = e.target.value;
+                    setChatMessage(newValue);
                     handleTyping();
+
+                    // Handle mentions
+                    const lastAtIndex = newValue.lastIndexOf('@');
+                    if (lastAtIndex !== -1) {
+                      const afterAt = newValue.slice(lastAtIndex + 1);
+                      if (!afterAt.includes(' ')) {
+                        setMentionSearch(afterAt);
+                        setShowMentions(true);
+                        setMentionIndex(0);
+                      } else {
+                        setShowMentions(false);
+                      }
+                    } else {
+                      setShowMentions(false);
+                    }
                   }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onKeyDown={(e) => {
+                    if (showMentions) {
+                      const filteredUsers = roomState.users.filter(u => 
+                        u.name.toLowerCase().startsWith(mentionSearch.toLowerCase())
+                      );
+                      
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setMentionIndex(prev => (prev + 1) % filteredUsers.length);
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setMentionIndex(prev => (prev - 1 + filteredUsers.length) % filteredUsers.length);
+                      } else if (e.key === 'Enter' || e.key === 'Tab') {
+                        if (filteredUsers[mentionIndex]) {
+                          e.preventDefault();
+                          handleSelectMention(filteredUsers[mentionIndex].name);
+                        }
+                      } else if (e.key === 'Escape') {
+                        setShowMentions(false);
+                      }
+                    } else if (e.key === 'Enter') {
+                      handleSendMessage();
+                    }
+                  }}
                   placeholder="Type a message..."
                   className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 transition-colors text-slate-800 dark:text-white"
                 />
@@ -967,7 +1105,7 @@ export default function App() {
               <p className="text-sm text-slate-800 dark:text-slate-200 truncate font-medium">
                 {lastChatMessage ? (
                   <>
-                    <span className="font-bold text-blue-500 dark:text-blue-400">{lastChatMessage.userName}:</span> {lastChatMessage.text}
+                    <span className="font-bold text-blue-500 dark:text-blue-400">{lastChatMessage.userName}:</span> {renderJiraLinks(lastChatMessage.text)}
                   </>
                 ) : 'Click to open chat'}
               </p>
