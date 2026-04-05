@@ -910,7 +910,11 @@ export default function App() {
       {/* Chat Component */}
       <div ref={chatRef} className="fixed bottom-8 left-8 z-50 flex flex-col items-start gap-3">
         {showChat && (
-          <div className="w-80 h-[450px] bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+          <div className={`w-80 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300 ${
+            roomState.messages.length > 4 
+              ? 'h-fit min-h-[450px] max-h-[calc(100vh-160px)]' 
+              : 'h-[450px]'
+          }`}>
             {/* Chat Header */}
             <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
               <h3 className="font-bold flex items-center gap-2 text-slate-800 dark:text-white">
