@@ -58,6 +58,7 @@ const CHARACTERS = [
   { name: 'Munim', title: 'Web Developer', avatar: '💻' },
   { name: 'David', title: 'API Developer', avatar: '☁️' },
   { name: 'Fergal', title: 'API Developer', avatar: '☁️' },
+  { name: 'William', title: 'API Developer', avatar: '☁️' },
   { name: 'Akash', title: 'Lead Developer', avatar: '🚀' },
   { name: 'Melody', title: 'Scrum Master', avatar: '📋' },
   { name: 'Gillian', title: 'Designer', avatar: '🎨' },
