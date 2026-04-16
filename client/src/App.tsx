@@ -15,7 +15,8 @@ import {
   Copy,
   Check,
   Play,
-  ChevronLeft
+  ChevronLeft,
+  Trash2
 } from 'lucide-react';
 
 // --- Types ---
@@ -45,6 +46,7 @@ interface HistoryEntry {
 }
 
 interface ChatMessage {
+  id: string;
   userName: string;
   text: string;
   timestamp: number;
@@ -420,6 +422,12 @@ export default function App() {
       setChatMessage('');
       setShowMentions(false);
       setMentionSearch('');
+    }
+  };
+
+  const handleDeleteMessage = (messageId: string) => {
+    if (socket) {
+      socket.emit('delete-message', messageId);
     }
   };
 
@@ -934,10 +942,19 @@ export default function App() {
                 <p className="text-center text-slate-400 text-sm mt-10 italic">No messages yet. Say hi!</p>
               ) : (
                 filteredMessages.map((msg, i) => (
-                  <div key={i} className={`flex flex-col ${msg.userName === userInRoom?.name ? 'items-end' : 'items-start'}`}>
+                  <div key={msg.id || i} className={`flex flex-col group ${msg.userName === userInRoom?.name ? 'items-end' : 'items-start'}`}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{msg.userName}</span>
                       <span className="text-[10px] text-slate-400">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      {(msg.userName === userInRoom?.name || userInRoom?.isAdmin) && (
+                        <button
+                          onClick={() => handleDeleteMessage(msg.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 transition-all rounded"
+                          title="Delete message"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                     <div className={`px-3 py-2 rounded-2xl max-w-[90%] break-words shadow-sm ${REACTIONS.includes(msg.text.trim()) ? 'text-3xl bg-transparent !border-0 !shadow-none' : 'text-sm'
                       } ${msg.userName === userInRoom?.name

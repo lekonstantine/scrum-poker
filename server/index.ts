@@ -44,6 +44,7 @@ interface HistoryEntry {
 }
 
 interface ChatMessage {
+  id: string;
   userName: string;
   text: string;
   timestamp: number;
@@ -101,6 +102,7 @@ io.on('connection', (socket) => {
     const user = users.find(u => u.id === socket.id);
     if (user && text.trim()) {
       const newMessage: ChatMessage = {
+        id: Math.random().toString(36).substring(2, 11),
         userName: user.name,
         text: text.trim(),
         timestamp: Date.now(),
@@ -110,6 +112,21 @@ io.on('connection', (socket) => {
       if (messages.length > 100) {
         messages = messages.slice(-100);
       }
+      io.emit('state-update', { users, currentTask, isRevealed, history, messages });
+    }
+  });
+
+  socket.on('delete-message', (messageId: string) => {
+    const user = users.find(u => u.id === socket.id);
+    if (!user) return;
+
+    const messageIndex = messages.findIndex(m => m.id === messageId);
+    if (messageIndex === -1) return;
+
+    const message = messages[messageIndex];
+    // Allow deletion if user is the author OR is an admin
+    if (message.userName === user.name || user.isAdmin) {
+      messages.splice(messageIndex, 1);
       io.emit('state-update', { users, currentTask, isRevealed, history, messages });
     }
   });
