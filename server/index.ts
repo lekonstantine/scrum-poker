@@ -124,6 +124,8 @@ io.on('connection', (socket) => {
     if (messageIndex === -1) return;
 
     const message = messages[messageIndex];
+    if (!message) return;
+
     // Allow deletion if user is the author OR is an admin
     if (message.userName === user.name || user.isAdmin) {
       messages.splice(messageIndex, 1);
