@@ -7,7 +7,6 @@ import {
   XCircle,
   User as UserIcon,
   Crown,
-  LogOut,
   Sun,
   Moon,
   Smile,
@@ -76,12 +75,10 @@ const REACTIONS = [
 
 const JiraLinkWithCopy = ({
   jiraId,
-  originalText,
   className,
   onSetTask
 }: {
   jiraId: string,
-  originalText: string,
   className?: string,
   onSetTask?: (id: string) => void
 }) => {
@@ -167,7 +164,6 @@ const renderJiraLinks = (text: string, linkClassName?: string, onSetTask?: (id: 
         <JiraLinkWithCopy
           key={i}
           jiraId={jiraId}
-          originalText={part}
           className={linkClassName}
           onSetTask={onSetTask}
         />
@@ -182,7 +178,6 @@ const renderJiraLinks = (text: string, linkClassName?: string, onSetTask?: (id: 
         <JiraLinkWithCopy
           key={i}
           jiraId={jiraId}
-          originalText={part}
           className={linkClassName}
           onSetTask={onSetTask}
         />
@@ -197,7 +192,6 @@ const renderJiraLinks = (text: string, linkClassName?: string, onSetTask?: (id: 
         <JiraLinkWithCopy
           key={i}
           jiraId={jiraId}
-          originalText={part}
           className={linkClassName}
           onSetTask={onSetTask}
         />
@@ -238,7 +232,13 @@ export default function App() {
   const [showMentions, setShowMentions] = useState(false);
   const [mentionIndex, setMentionIndex] = useState(0);
   const [typingUsers, setTypingUsers] = useState<{ [key: string]: number }>({});
+  const [currentTime, setCurrentTime] = useState(Date.now());
   const chatRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(Date.now()), 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -467,7 +467,9 @@ export default function App() {
   const observers = roomState.users.filter(u => u.isObserver);
   const scrumMasters = roomState.users.filter(u => u.isAdmin);
   const latestHistory = roomState.history[roomState.history.length - 1];
-  const lastChatMessage = roomState.messages[roomState.messages.length - 1];
+  const ONE_HOUR = 60 * 60 * 1000;
+  const filteredMessages = roomState.messages.filter(msg => msg.timestamp > currentTime - ONE_HOUR);
+  const lastChatMessage = filteredMessages[filteredMessages.length - 1];
 
   const getTypingText = () => {
     const names = Object.keys(typingUsers);
@@ -909,7 +911,7 @@ export default function App() {
       {/* Chat Component */}
       <div ref={chatRef} className="fixed bottom-8 left-8 z-50 flex flex-col items-start gap-3">
         {showChat && (
-          <div className={`w-80 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300 ${roomState.messages.length > 4
+          <div className={`w-80 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300 ${filteredMessages.length > 4
               ? 'h-fit min-h-[450px] max-h-[calc(100vh-160px)]'
               : 'h-[450px]'
             }`}>
@@ -928,10 +930,10 @@ export default function App() {
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {roomState.messages.length === 0 ? (
+              {filteredMessages.length === 0 ? (
                 <p className="text-center text-slate-400 text-sm mt-10 italic">No messages yet. Say hi!</p>
               ) : (
-                roomState.messages.map((msg, i) => (
+                filteredMessages.map((msg, i) => (
                   <div key={i} className={`flex flex-col ${msg.userName === userInRoom?.name ? 'items-end' : 'items-start'}`}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{msg.userName}</span>
@@ -975,7 +977,7 @@ export default function App() {
                   <div className="max-h-48 overflow-y-auto">
                     {roomState.users
                       .filter(u => u.name.toLowerCase().startsWith(mentionSearch.toLowerCase()))
-                      .map((user, idx, filtered) => (
+                      .map((user, idx) => (
                         <button
                           key={user.id}
                           onClick={() => handleSelectMention(user.name)}
