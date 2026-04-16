@@ -476,6 +476,7 @@ export default function App() {
   const scrumMasters = roomState.users.filter(u => u.isAdmin);
   const latestHistory = roomState.history[roomState.history.length - 1];
   const ONE_HOUR = 60 * 60 * 1000;
+  const filteredHistory = roomState.history.filter(entry => entry.timestamp > currentTime - ONE_HOUR);
   const filteredMessages = roomState.messages.filter(msg => msg.timestamp > currentTime - ONE_HOUR);
   const lastChatMessage = filteredMessages[filteredMessages.length - 1];
 
@@ -882,10 +883,10 @@ export default function App() {
             </div>
 
             <div className="space-y-6">
-              {roomState.history.length === 0 ? (
-                <p className="text-slate-400 italic">No voting history yet.</p>
+              {filteredHistory.length === 0 ? (
+                <p className="text-slate-400 italic">No voting history from the last hour.</p>
               ) : (
-                roomState.history.slice().reverse().map((entry, idx) => (
+                filteredHistory.slice().reverse().map((entry, idx) => (
                   <div key={idx} className="bg-slate-50 dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
