@@ -66,7 +66,7 @@ io.on('connection', (socket) => {
 
   socket.on('join', (userData: { name: string; title: string; avatar: string; isObserver?: boolean }) => {
     if (users.some(u => u.name === userData.name)) {
-      socket.emit('error', 'Этот персонаж уже занят');
+      socket.emit('error', 'This character is already taken');
       return;
     }
 
