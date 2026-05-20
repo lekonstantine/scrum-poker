@@ -9,3 +9,4 @@ playwright/.cache/
 target/
 .debug/
 *.env
+.antigravitycli

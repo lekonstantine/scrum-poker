@@ -81,6 +81,20 @@ const AVATAR_OPTIONS = [
   '🍕', '🍔', '🍦', '🍩', '🍺', '☕', '🎸', '🎮'
 ];
 
+const formatJiraId = (id: string): string => {
+  const trimmed = id.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  if (/^\d+$/.test(trimmed)) {
+    return `CTG-${trimmed}`;
+  }
+  if (/^ctg-\d+$/i.test(trimmed)) {
+    return trimmed.toUpperCase();
+  }
+  return trimmed;
+};
+
 const JiraLinkWithCopy = ({
   jiraId,
   className,
@@ -91,7 +105,8 @@ const JiraLinkWithCopy = ({
   onSetTask?: (id: string) => void
 }) => {
   const [copied, setCopied] = useState(false);
-  const fullUrl = `https://cathaypacific-prod.atlassian.net/browse/${jiraId}`;
+  const formattedId = formatJiraId(jiraId);
+  const fullUrl = formattedId.startsWith('http') ? formattedId : `https://cathaypacific-prod.atlassian.net/browse/${formattedId}`;
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -111,7 +126,7 @@ const JiraLinkWithCopy = ({
         className={className || "text-blue-600 dark:text-blue-400 hover:underline"}
         onClick={(e) => e.stopPropagation()}
       >
-        {jiraId}
+        {formattedId}
       </a>
       <div className="flex items-center gap-0.5">
         <button
@@ -469,6 +484,38 @@ export default function App() {
     }
   };
 
+  const handleExportHistory = () => {
+    if (filteredHistory.length === 0) return;
+
+    let content = `SCRUM POKER SESSION RESULTS - ${new Date().toLocaleString()}\n`;
+    content += `===========================================\n\n`;
+
+    filteredHistory.slice().reverse().forEach((entry) => {
+      const jiraId = entry.task.id;
+      const formattedId = formatJiraId(jiraId);
+      const fullUrl = formattedId.startsWith('http') ? formattedId : `https://cathaypacific-prod.atlassian.net/browse/${formattedId}`;
+      content += `Task: ${entry.task.title}\n`;
+      content += `JIRA: ${fullUrl}\n`;
+      content += `Time: ${new Date(entry.timestamp).toLocaleTimeString()}\n`;
+      content += `Average Score: ${entry.average}\n`;
+      content += `Individual Votes:\n`;
+      Object.entries(entry.votes).forEach(([name, vote]) => {
+        content += `  - ${name}: ${vote}\n`;
+      });
+      content += `-------------------------------------------\n\n`;
+    });
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `scrum-poker-results-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const [lastTypingEmit, setLastTypingEmit] = useState(0);
 
   const handleTyping = () => {
@@ -490,9 +537,9 @@ export default function App() {
   const observers = roomState.users.filter(u => u.isObserver);
   const scrumMasters = roomState.users.filter(u => u.isAdmin);
   const latestHistory = roomState.history[roomState.history.length - 1];
-  const ONE_HOUR = 60 * 60 * 1000;
-  const filteredHistory = roomState.history.filter(entry => entry.timestamp > currentTime - ONE_HOUR);
-  const filteredMessages = roomState.messages.filter(msg => msg.timestamp > currentTime - ONE_HOUR);
+  const NINETY_MINUTES = 90 * 60 * 1000;
+  const filteredHistory = roomState.history.filter(entry => entry.timestamp > currentTime - NINETY_MINUTES);
+  const filteredMessages = roomState.messages.filter(msg => msg.timestamp > currentTime - NINETY_MINUTES);
   const lastChatMessage = filteredMessages[filteredMessages.length - 1];
 
   const getTypingText = () => {
@@ -968,17 +1015,28 @@ export default function App() {
               <h2 className="text-2xl font-bold flex items-center gap-3 text-slate-800 dark:text-white">
                 <History className="text-blue-500 dark:text-blue-400" /> Voting History
               </h2>
-              <button
-                onClick={() => setShowHistory(false)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
+              <div className="flex items-center gap-2">
+                {filteredHistory.length > 0 && (
+                  <button
+                    onClick={handleExportHistory}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                    title="Export results to TXT"
+                  >
+                    Export TXT
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowHistory(false)}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-6">
               {filteredHistory.length === 0 ? (
-                <p className="text-slate-400 italic">No voting history from the last hour.</p>
+                <p className="text-slate-400 italic">No voting history from the last 1.5 hours.</p>
               ) : (
                 filteredHistory.slice().reverse().map((entry, idx) => (
                   <div key={idx} className="bg-slate-50 dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
