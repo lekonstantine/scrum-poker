@@ -287,8 +287,8 @@ export default function App() {
 
   useEffect(() => {
     const handleResize = () => {
-      const minWidth = 1200; // Desired width for full table layout
-      const minHeight = 750; // Desired height for full table layout
+      const minWidth = 1300; // Desired width for full table layout
+      const minHeight = 700; // Desired height for full table layout
       const scaleX = window.innerWidth / minWidth;
       const scaleY = (window.innerHeight - 250) / (minHeight - 250); // 250 for UI overhead
       setScale(Math.min(1, scaleX, scaleY));
@@ -725,14 +725,14 @@ export default function App() {
       <main className="flex-1 flex flex-col items-center justify-center relative min-h-0">
         <div
           className="flex items-center justify-center -translate-y-[10%]"
-          style={{ height: `${350 * scale}px`, width: `${850 * scale}px` }}
+          style={{ height: `${280 * scale}px`, width: `${950 * scale}px` }}
         >
           <div
             className="transition-transform duration-300 flex items-center justify-center z-10 shrink-0"
-            style={{ transform: `scale(${scale})`, width: '850px', height: '350px' }}
+            style={{ transform: `scale(${scale})`, width: '950px', height: '280px' }}
           >
             {/* The Table */}
-            <div className="w-[850px] h-[350px] bg-white dark:bg-slate-800 rounded-[200px] border-[12px] border-slate-100 dark:border-slate-700 shadow-2xl relative flex items-center justify-center transition-colors">
+            <div className="w-[950px] h-[280px] bg-white dark:bg-slate-800 rounded-[150px] border-[12px] border-slate-100 dark:border-slate-700 shadow-2xl relative flex items-center justify-center transition-colors">
               <div className="text-center max-w-md p-8">
                 {roomState.currentTask ? (
                   <>
@@ -752,9 +752,22 @@ export default function App() {
 
               {/* Seats */}
               {[...Array(12)].map((_, i) => {
-                const angle = (i * 30) * (Math.PI / 180);
-                const x = Math.cos(angle) * 480;
-                const y = Math.sin(angle) * 220;
+                // Manually position seats to avoid crowding on the curved sides
+                let x, y;
+                if (i === 0) {
+                  x = 540; y = 0; // Right side
+                } else if (i === 6) {
+                  x = -540; y = 0; // Left side
+                } else if (i > 0 && i < 6) {
+                  // Bottom side (indices 1-5): spread from right to left
+                  x = (3 - i) * 210;
+                  y = 200;
+                } else {
+                  // Top side (indices 7-11): spread from left to right
+                  x = (i - 9) * 210;
+                  y = -200;
+                }
+                
                 const seatedUser = roomState.users.find(u => u.seatIndex === i);
                 const revealedVote = roomState.isRevealed && latestHistory ? latestHistory.votes[seatedUser?.name || ''] : null;
 
@@ -910,27 +923,34 @@ export default function App() {
         {!userInRoom?.isAdmin && !userInRoom?.isObserver && (
           <div className="flex flex-col items-center justify-center w-full px-4 min-h-[100px]">
             {roomState.currentTask ? (
-              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pointer-events-auto">
-                {VOTE_VALUES.map((val) => (
+              roomState.isRevealed ? (
+                <div className="text-blue-500 dark:text-blue-400 font-bold flex items-center gap-2 text-sm opacity-80 pointer-events-auto bg-blue-50 dark:bg-blue-900/20 px-6 py-3 rounded-2xl border border-blue-100 dark:border-blue-800/50 animate-in fade-in zoom-in duration-300">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Voting finished. Results are revealed!
+                </div>
+              ) : (
+                <div className="flex flex-wrap justify-center gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pointer-events-auto">
+                  {VOTE_VALUES.map((val) => (
+                    <button
+                      key={val}
+                      onClick={() => handleVote(userInRoom?.vote === val ? null : val)}
+                      className={`w-14 h-20 sm:w-16 sm:h-24 rounded-xl border-2 font-bold text-xl sm:text-2xl transition-all hover:-translate-y-2 ${userInRoom?.vote === val
+                          ? 'bg-blue-600 border-blue-400 -translate-y-4 shadow-xl shadow-blue-500/50 text-white'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-blue-300 dark:hover:border-slate-500 shadow-md'
+                        }`}
+                    >
+                      {val}
+                    </button>
+                  ))}
                   <button
-                    key={val}
-                    onClick={() => handleVote(userInRoom?.vote === val ? null : val)}
-                    className={`w-14 h-20 sm:w-16 sm:h-24 rounded-xl border-2 font-bold text-xl sm:text-2xl transition-all hover:-translate-y-2 ${userInRoom?.vote === val
-                        ? 'bg-blue-600 border-blue-400 -translate-y-4 shadow-xl shadow-blue-500/50 text-white'
-                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white hover:border-blue-300 dark:hover:border-slate-500 shadow-md'
-                      }`}
+                    onClick={() => handleVote(null)}
+                    className="px-4 sm:px-6 h-20 sm:h-24 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 font-bold transition-all flex flex-col items-center justify-center gap-1 shadow-md"
                   >
-                    {val}
+                    <XCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <span className="text-[10px] sm:text-xs">Clear</span>
                   </button>
-                ))}
-                <button
-                  onClick={() => handleVote(null)}
-                  className="px-4 sm:px-6 h-20 sm:h-24 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 font-bold transition-all flex flex-col items-center justify-center gap-1 shadow-md"
-                >
-                  <XCircle className="w-5 h-5 sm:w-6 sm:h-6" />
-                  <span className="text-[10px] sm:text-xs">Clear</span>
-                </button>
-              </div>
+                </div>
+              )
             ) : (
               <div className="text-slate-400 dark:text-slate-500 italic flex items-center gap-2 text-sm opacity-80 pointer-events-auto">
                 <Smile className="w-4 h-4 text-blue-500/50" />
