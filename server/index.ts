@@ -158,6 +158,14 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('change-avatar', (avatar: string) => {
+    const user = users.find(u => u.id === socket.id);
+    if (user && avatar.trim()) {
+      user.avatar = avatar;
+      io.emit('state-update', { users, currentTask, isRevealed, history, messages });
+    }
+  });
+
   socket.on('reaction', (emoji: string) => {
     const user = users.find(u => u.id === socket.id);
     if (user) {

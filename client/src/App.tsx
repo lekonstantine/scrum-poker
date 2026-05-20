@@ -74,6 +74,12 @@ const REACTIONS = [
   '🤝', '🙌', '🤡', '✅', '❌',
   '💨'
 ];
+const AVATAR_OPTIONS = [
+  '📱', '💻', '☁️', '🚀', '📋', '🎨', '🛠️', '🕵️', 
+  '🧙', '🧛', '🧟', '🦄', '🐲', '🐱', '🐶', '🦊',
+  '🐻', '🐼', '🐯', '🦁', '🐸', '🐙', '🦖', '🦕',
+  '🍕', '🍔', '🍦', '🍩', '🍺', '☕', '🎸', '🎮'
+];
 
 const JiraLinkWithCopy = ({
   jiraId,
@@ -227,6 +233,8 @@ export default function App() {
   const [jiraId, setJiraId] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [customAvatarInput, setCustomAvatarInput] = useState('');
   const [showChatReactions, setShowChatReactions] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
@@ -375,6 +383,13 @@ export default function App() {
   const handleReaction = (emoji: string) => {
     if (socket) {
       socket.emit('reaction', emoji);
+    }
+  };
+
+  const handleChangeAvatar = (emoji: string) => {
+    if (socket) {
+      socket.emit('change-avatar', emoji);
+      setShowAvatarPicker(false);
     }
   };
 
@@ -569,7 +584,65 @@ export default function App() {
             <ChevronLeft className="w-5 h-5 group-hover/back:-translate-x-0.5 transition-transform" />
           </button>
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{userInRoom?.avatar}</span>
+            <div className="relative">
+              <button
+                onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+                className="text-2xl hover:scale-110 transition-transform p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                title="Change Avatar"
+              >
+                {userInRoom?.avatar}
+              </button>
+              {showAvatarPicker && (
+                <div className="absolute top-full left-0 mt-2 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-[100] w-[260px] animate-in slide-in-from-top-2 duration-200">
+                  <div className="grid grid-cols-5 gap-2 mb-3">
+                    {AVATAR_OPTIONS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => handleChangeAvatar(emoji)}
+                        className="w-10 h-10 flex items-center justify-center text-2xl hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all hover:scale-110"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 p-1 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <input
+                      type="text"
+                      placeholder="Paste emoji..."
+                      value={customAvatarInput}
+                      onChange={(e) => setCustomAvatarInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && customAvatarInput.trim()) {
+                          handleChangeAvatar(customAvatarInput.trim());
+                          setCustomAvatarInput('');
+                        }
+                      }}
+                      className="bg-transparent px-3 py-2 outline-none w-full text-sm text-slate-800 dark:text-white placeholder:text-slate-400"
+                    />
+                    <button
+                      onClick={() => {
+                        if (customAvatarInput.trim()) {
+                          handleChangeAvatar(customAvatarInput.trim());
+                          setCustomAvatarInput('');
+                        }
+                      }}
+                      disabled={!customAvatarInput.trim()}
+                      className="px-3 py-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-colors"
+                    >
+                      Set
+                    </button>
+                  </div>
+                  <a
+                    href="https://getemoji.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 block text-center text-[10px] text-slate-400 dark:text-slate-500 hover:text-blue-500 transition-colors"
+                  >
+                    View all emojis ↗
+                  </a>
+                </div>
+              )}
+            </div>
             <div className="flex flex-col">
               <h2 className="font-bold flex items-center gap-2 text-lg leading-tight">
                 {userInRoom?.name} {userInRoom?.isAdmin && <Crown className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />}
@@ -722,6 +795,7 @@ export default function App() {
                             ? 'bg-blue-600/20 dark:bg-blue-600/30 border-blue-500/50 text-blue-700 dark:text-blue-200 font-bold'
                             : 'bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100'
                           }`}>
+                          <span className="text-lg">{seatedUser.avatar}</span>
                           <span>{seatedUser.name}</span>
                           {userInRoom?.isAdmin && seatedUser.id !== userInRoom.id && (
                             <button
