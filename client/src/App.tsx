@@ -279,8 +279,8 @@ export default function App() {
 
   useEffect(() => {
     const handleResize = () => {
-      const minWidth = 1000; // Desired width for full table layout
-      const minHeight = 700; // Desired height for full table layout
+      const minWidth = 1200; // Desired width for full table layout
+      const minHeight = 750; // Desired height for full table layout
       const scaleX = window.innerWidth / minWidth;
       const scaleY = (window.innerHeight - 250) / (minHeight - 250); // 250 for UI overhead
       setScale(Math.min(1, scaleX, scaleY));
@@ -652,14 +652,14 @@ export default function App() {
       <main className="flex-1 flex flex-col items-center justify-center relative min-h-0">
         <div
           className="flex items-center justify-center -translate-y-[10%]"
-          style={{ height: `${325 * scale}px`, width: `${650 * scale}px` }}
+          style={{ height: `${350 * scale}px`, width: `${850 * scale}px` }}
         >
           <div
             className="transition-transform duration-300 flex items-center justify-center z-10 shrink-0"
-            style={{ transform: `scale(${scale})`, width: '650px', height: '325px' }}
+            style={{ transform: `scale(${scale})`, width: '850px', height: '350px' }}
           >
             {/* The Table */}
-            <div className="w-[650px] h-[325px] bg-white dark:bg-slate-800 rounded-[200px] border-[12px] border-slate-100 dark:border-slate-700 shadow-2xl relative flex items-center justify-center transition-colors">
+            <div className="w-[850px] h-[350px] bg-white dark:bg-slate-800 rounded-[200px] border-[12px] border-slate-100 dark:border-slate-700 shadow-2xl relative flex items-center justify-center transition-colors">
               <div className="text-center max-w-md p-8">
                 {roomState.currentTask ? (
                   <>
@@ -678,10 +678,10 @@ export default function App() {
               </div>
 
               {/* Seats */}
-              {[...Array(10)].map((_, i) => {
-                const angle = (i * 36) * (Math.PI / 180);
-                const x = Math.cos(angle) * 360;
-                const y = Math.sin(angle) * 200;
+              {[...Array(12)].map((_, i) => {
+                const angle = (i * 30) * (Math.PI / 180);
+                const x = Math.cos(angle) * 480;
+                const y = Math.sin(angle) * 220;
                 const seatedUser = roomState.users.find(u => u.seatIndex === i);
                 const revealedVote = roomState.isRevealed && latestHistory ? latestHistory.votes[seatedUser?.name || ''] : null;
 
