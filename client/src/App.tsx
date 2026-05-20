@@ -672,7 +672,7 @@ export default function App() {
                       value={customAvatarInput}
                       onChange={(e) => setCustomAvatarInput(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && customAvatarInput.trim()) {
+                        if (e.key === 'Enter' && customAvatarInput.trim() && isSingleEmoji(customAvatarInput)) {
                           handleChangeAvatar(customAvatarInput.trim());
                           setCustomAvatarInput('');
                         }
@@ -681,12 +681,12 @@ export default function App() {
                     />
                     <button
                       onClick={() => {
-                        if (customAvatarInput.trim()) {
+                        if (customAvatarInput.trim() && isSingleEmoji(customAvatarInput)) {
                           handleChangeAvatar(customAvatarInput.trim());
                           setCustomAvatarInput('');
                         }
                       }}
-                      disabled={!customAvatarInput.trim()}
+                      disabled={!customAvatarInput.trim() || !isSingleEmoji(customAvatarInput)}
                       className="px-3 py-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-colors"
                     >
                       Set
@@ -935,7 +935,7 @@ export default function App() {
                   value={customReactionInput}
                   onChange={(e) => setCustomReactionInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && customReactionInput.trim()) {
+                    if (e.key === 'Enter' && customReactionInput.trim() && isSingleEmoji(customReactionInput)) {
                       handleReaction(customReactionInput.trim());
                       setCustomReactionInput('');
                       setShowReactions(false);
@@ -945,13 +945,13 @@ export default function App() {
                 />
                 <button
                   onClick={() => {
-                    if (customReactionInput.trim()) {
+                    if (customReactionInput.trim() && isSingleEmoji(customReactionInput)) {
                       handleReaction(customReactionInput.trim());
                       setCustomReactionInput('');
                       setShowReactions(false);
                     }
                   }}
-                  disabled={!customReactionInput.trim()}
+                  disabled={!customReactionInput.trim() || !isSingleEmoji(customReactionInput)}
                   className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-colors shrink-0"
                 >
                   Send
@@ -1249,7 +1249,7 @@ export default function App() {
                       value={customChatReactionInput}
                       onChange={(e) => setCustomChatReactionInput(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && customChatReactionInput.trim()) {
+                        if (e.key === 'Enter' && customChatReactionInput.trim() && isSingleEmoji(customChatReactionInput)) {
                           if (socket) {
                             socket.emit('message', customChatReactionInput.trim());
                           }
@@ -1261,7 +1261,7 @@ export default function App() {
                     />
                     <button
                       onClick={() => {
-                        if (customChatReactionInput.trim()) {
+                        if (customChatReactionInput.trim() && isSingleEmoji(customChatReactionInput)) {
                           if (socket) {
                             socket.emit('message', customChatReactionInput.trim());
                           }
@@ -1269,7 +1269,7 @@ export default function App() {
                           setShowChatReactions(false);
                         }
                       }}
-                      disabled={!customChatReactionInput.trim()}
+                      disabled={!customChatReactionInput.trim() || !isSingleEmoji(customChatReactionInput)}
                       className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-colors shrink-0"
                     >
                       Send
