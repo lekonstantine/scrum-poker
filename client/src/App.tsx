@@ -86,10 +86,10 @@ const formatJiraId = (id: string): string => {
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
   }
-  if (/^\d+$/.test(trimmed)) {
+  if (/^\d{3,4}$/.test(trimmed)) {
     return `CTG-${trimmed}`;
   }
-  if (/^ctg-\d+$/i.test(trimmed)) {
+  if (/^ctg-\d{3,4}$/i.test(trimmed)) {
     return trimmed.toUpperCase();
   }
   return trimmed;
@@ -443,15 +443,20 @@ export default function App() {
     const trimmedId = jiraId.trim();
     if (!trimmedId) return;
     
-    if (!/^CTG-\d+$/.test(trimmedId)) {
-      alert('Invalid task format. Please use CTG-XXXX (e.g., CTG-1234)');
+    let finalId = trimmedId;
+    if (/^\d{3,4}$/.test(trimmedId)) {
+      finalId = `CTG-${trimmedId}`;
+    } else if (/^CTG-\d{3,4}$/i.test(trimmedId)) {
+      finalId = trimmedId.toUpperCase();
+    } else {
+      alert('Invalid task format. Please use 3-4 digits or CTG-XXXX (e.g., 1234 or CTG-1234)');
       return;
     }
 
     if (socket) {
       socket.emit('set-task', {
-        id: trimmedId,
-        title: trimmedId,
+        id: finalId,
+        title: finalId,
         description: 'No description provided'
       });
       setJiraId('');
@@ -493,14 +498,21 @@ export default function App() {
   };
 
   const handleQuickSetTask = (id: string) => {
-    if (!/^CTG-\d+$/.test(id)) {
-      alert('Invalid task format. Please use CTG-XXXX (e.g., CTG-1234)');
+    const trimmedId = id.trim();
+    let finalId = trimmedId;
+    if (/^\d{3,4}$/.test(trimmedId)) {
+      finalId = `CTG-${trimmedId}`;
+    } else if (/^CTG-\d{3,4}$/i.test(trimmedId)) {
+      finalId = trimmedId.toUpperCase();
+    } else {
+      alert('Invalid task format. Please use 3-4 digits or CTG-XXXX (e.g., 1234 or CTG-1234)');
       return;
     }
+
     if (socket && currentUser?.isAdmin) {
       socket.emit('set-task', {
-        id: id,
-        title: id,
+        id: finalId,
+        title: finalId,
         description: 'Set via quick action'
       });
       setShowChat(false);

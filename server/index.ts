@@ -58,6 +58,10 @@ let messages: ChatMessage[] = [];
 
 const MAX_SEATS = 12;
 
+const ALLOWED_USERS = [
+  'Kons', 'Jason', 'Bharat', 'Munim', 'David', 'Fergal', 'William', 'Akash', 'Melody', 'Pak', 'Adrian'
+];
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -65,6 +69,11 @@ io.on('connection', (socket) => {
   socket.emit('state-update', { users, currentTask, isRevealed, history, messages });
 
   socket.on('join', (userData: { name: string; title: string; avatar: string; isObserver?: boolean }) => {
+    if (!userData.isObserver && !ALLOWED_USERS.includes(userData.name)) {
+      socket.emit('error', 'You must be on the allowed users list to join as a player.');
+      return;
+    }
+
     if (users.some(u => u.name === userData.name)) {
       socket.emit('error', 'This character is already taken');
       return;
@@ -140,11 +149,15 @@ io.on('connection', (socket) => {
     }
   });
 
+  const ALLOWED_VOTES = ['1', '2', '3', '5', '8'];
+
   socket.on('vote', (vote: string | null) => {
     const user = users.find(u => u.id === socket.id);
     if (user) {
-      user.vote = vote;
-      io.emit('state-update', { users, currentTask, isRevealed, history, messages });
+      if (vote === null || ALLOWED_VOTES.includes(vote)) {
+        user.vote = vote;
+        io.emit('state-update', { users, currentTask, isRevealed, history, messages });
+      }
     }
   });
 
