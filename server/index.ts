@@ -223,6 +223,13 @@ io.on('connection', (socket) => {
     const admin = users.find(u => u.id === socket.id && u.isAdmin);
     console.log(`Setting task: ${task?.id}, requested by: ${admin?.name || 'unknown'}`);
     if (admin) {
+      if (task) {
+        const isValid = /^CTG-\d+$/.test(task.title);
+        if (!isValid) {
+          socket.emit('error', 'Invalid task format. Please use CTG-XXXX (e.g., CTG-1234)');
+          return;
+        }
+      }
       currentTask = task;
       isRevealed = false;
       users.forEach(u => u.vote = null);

@@ -440,11 +440,18 @@ export default function App() {
   };
 
   const handleSetTask = () => {
-    if (!jiraId.trim()) return;
+    const trimmedId = jiraId.trim();
+    if (!trimmedId) return;
+    
+    if (!/^CTG-\d+$/.test(trimmedId)) {
+      alert('Invalid task format. Please use CTG-XXXX (e.g., CTG-1234)');
+      return;
+    }
+
     if (socket) {
       socket.emit('set-task', {
-        id: jiraId.trim(),
-        title: jiraId.trim(),
+        id: trimmedId,
+        title: trimmedId,
         description: 'No description provided'
       });
       setJiraId('');
@@ -486,6 +493,10 @@ export default function App() {
   };
 
   const handleQuickSetTask = (id: string) => {
+    if (!/^CTG-\d+$/.test(id)) {
+      alert('Invalid task format. Please use CTG-XXXX (e.g., CTG-1234)');
+      return;
+    }
     if (socket && currentUser?.isAdmin) {
       socket.emit('set-task', {
         id: id,
